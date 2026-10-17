@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { resolve, extname, sep } from "node:path";
+import { gzipSync } from "node:zlib";
 
 const root = resolve("out");
 const types = {
@@ -32,12 +33,20 @@ createServer(async (req, res) => {
       file = resolve(root, "404.html");
       res.statusCode = 404;
     }
-    const data = await readFile(file);
+    let data = await readFile(file);
     res.setHeader(
       "Content-Type",
       types[extname(file)] || "application/octet-stream",
     );
     res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Vary", "Accept-Encoding");
+    if (
+      /\bgzip\b/.test(req.headers["accept-encoding"] ?? "") &&
+      /\.(html|css|js|json|svg|txt|xml)$/.test(file)
+    ) {
+      data = gzipSync(data);
+      res.setHeader("Content-Encoding", "gzip");
+    }
     res.end(req.method === "HEAD" ? undefined : data);
   } catch {
     res.writeHead(400).end("Bad request");

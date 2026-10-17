@@ -7,8 +7,8 @@
   --blue-dark: #174da6;
   --line: oklch(0.91 0.012 260);
   --pale: oklch(0.96 0.012 263);
-  --display: "Space Grotesk Variable", sans-serif;
-  --body: "Manrope Variable", sans-serif;
+  --display: var(--font-space), sans-serif;
+  --body: var(--font-manrope), sans-serif;
   --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 * {

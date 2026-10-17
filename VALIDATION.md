@@ -41,3 +41,10 @@ The GitHub Pages workflow independently installs from the lockfile, lints, type-
 The complete in-memory quickstart was run using Go 1.27.0 on Windows against upstream CobaltDB commit `ed947ca8e7ba4d950fff02ec532dc5cb4cfba201`; it printed `Hello, CobaltDB!`.
 
 A separate persistent-mode smoke check with `engine.Open("app.db", nil)` failed on this Windows host with `failed to sync database directory: sync .: Access is denied`. This is an observed upstream database/filesystem issue, outside the website implementation. The in-memory quickstart passed; this record does not certify persistent-mode or database production readiness. No database repository code was changed.
+
+## Appearance picker follow-up
+
+- Replaced the invisible native select with a labeled appearance button and Light/Dark/System preview cards. The selected preference is visible in the trigger and cards; changing a card previews the theme immediately while the panel stays open.
+- Used native radio keyboard behavior, selected-option focus on opening, Escape focus restoration, and outside pointer/focus dismissal. Preserved saved preferences, OS appearance, cross-tab updates, pre-hydration initialization and storage-blocked operation.
+- Verified open-panel bounds and 44px choice targets at 320, 390, 768, 1024, 1440 and 3840px. Inspected light/dark screenshots at 390, 1440 and 3840px. Reduced motion disables the panel animation.
+- Formatting, lint, type check and production build passed. The full browser suite passed **75 tests**, zero failures/skips, with two workers across desktop, mobile and 4K. Added keyboard/dismissal and open-panel accessibility coverage; both settled palettes pass automated WCAG A/AA checks. Existing all-page, persistence and storage-error checks remain in the suite.

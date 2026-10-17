@@ -28,7 +28,7 @@ The build includes a small Windows export normalization for [Next.js #85374](htt
 
 ## Content and brand
 
-The header's sun/moon control offers **System**, **Light**, and **Dark** themes. A saved preference is applied before hydration, synchronizes across tabs, and survives navigation/reloads. With no preference (or no JavaScript), CSS follows the operating system. Storage failures do not prevent switching themes for the current page. Theme colors and SVG illustration tokens live in `src/app/themes.css`; the footer's OXOGNET studio card lives in `src/components/studio.tsx`.
+The header's appearance control shows the current preference and opens **Light**, **Dark**, and **System** preview cards. Native radio controls support arrow keys and instant preview; Escape restores focus, and clicking or tabbing outside dismisses the panel. The control uses an icon on smaller screens and scales with the 4K layout. A saved preference is applied before hydration, synchronizes across tabs, and survives navigation/reloads. With no preference (or no JavaScript), CSS follows the operating system. Storage failures do not prevent switching themes for the current page. Theme colors and SVG illustration tokens live in `src/app/themes.css`; the footer's OXOGNET studio card lives in `src/components/studio.tsx`.
 
 Large-screen layouts use roughly 79% of the viewport, capped at a proportional 3040px composition on native 4K, with larger reading sizes and a two-column studio project grid. Documentation retains a bounded reading column. Regression checks include 1920, 2560, 3072 and 3840px to cover common 4K display scaling.
 

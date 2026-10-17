@@ -2856,6 +2856,117 @@ p {
   }
 }
 
+/* Native 4K and OS-scaled 4K viewports need a wider composition and a
+   comfortable reading size, rather than only a larger hero heading. */
+@media (min-width: 1920px) {
+  html {
+    --wide-content-width: clamp(77.5rem, 79.16667vw, 95rem);
+  }
+  .container:not(.docs-layout) {
+    max-width: var(--wide-content-width);
+  }
+  .header-inner {
+    max-width: calc(var(--wide-content-width) + 5rem);
+  }
+  .database-art {
+    max-width: 43rem;
+  }
+  .hero-detail {
+    font-size: 1rem;
+    max-width: 30rem;
+  }
+  .hero-description {
+    font-size: 1.5rem;
+  }
+  .hero-buttons {
+    gap: 1rem;
+  }
+  .install-command {
+    max-width: 28rem;
+  }
+  .install-command code {
+    font-size: 0.8125rem;
+  }
+  .desktop-nav,
+  .github-link,
+  .button,
+  .text-link {
+    font-size: 0.8125rem;
+  }
+  .section-heading > p,
+  .feature-card p,
+  .feature-architecture p,
+  .quick-info > p,
+  .query-copy > p,
+  .deployment-card > p,
+  .faq-list p {
+    font-size: 0.9375rem;
+    line-height: 1.85;
+  }
+  .feature-card p {
+    max-width: 48ch;
+  }
+  .query-copy > p {
+    max-width: 27rem;
+  }
+  .deployment-card > p {
+    max-width: 32rem;
+  }
+  .feature-card h3 {
+    font-size: 1.625rem;
+  }
+  .feature-architecture h3,
+  .deployment-card h3 {
+    font-size: 2.125rem;
+  }
+  .mode-tabs strong,
+  .query-tabs button,
+  .faq-list summary {
+    font-size: 0.875rem;
+  }
+  .mode-tabs small,
+  .code-toolbar,
+  .code-actions,
+  .query-window-bar > span:first-child,
+  .query-editor-title,
+  .results-title {
+    font-size: 0.6875rem;
+  }
+  .code-block pre,
+  .query-editor pre {
+    font-size: 0.8125rem;
+  }
+  .query-results table {
+    font-size: 0.75rem;
+  }
+  .query-results th {
+    font-size: 0.6875rem;
+  }
+  .strip-item {
+    font-size: 0.8125rem;
+  }
+  .eyebrow,
+  .feature-tag,
+  .feature-number,
+  .hero-proof,
+  .benchmark-label,
+  .benchmark-card > p,
+  .benchmark-method strong,
+  .benchmark-method p,
+  .compatibility-note,
+  .code-footnote,
+  .query-disclaimer,
+  .built-go,
+  .footer-bottom {
+    font-size: 0.625rem;
+  }
+  .footer-column,
+  .footer-column h3,
+  .footer-brand > p {
+    font-size: 0.8125rem;
+  }
+}
+
 @media (max-width: 680px) {
   .header-actions {
     gap: 0.25rem;

@@ -269,6 +269,41 @@
   color: var(--muted);
 }
 
+@media (min-width: 1920px) {
+  .studio-card {
+    grid-template-columns: 9rem minmax(0, 1.25fr) minmax(18rem, 1fr);
+    gap: 2.25rem;
+  }
+  .studio-copy h2 {
+    font-size: 3.25rem;
+  }
+  .studio-copy > p {
+    font-size: 0.9375rem;
+    max-width: 33rem;
+  }
+  .studio-copy .eyebrow,
+  .studio-signature {
+    font-size: 0.625rem;
+  }
+  .studio-explore {
+    font-size: 0.8125rem;
+  }
+  .studio-projects {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  .studio-projects a {
+    min-height: 4.5rem;
+    padding: 1rem;
+  }
+  .studio-projects strong {
+    font-size: 0.8125rem;
+  }
+  .studio-projects small {
+    font-size: 0.6875rem;
+  }
+}
+
 @media (max-width: 1100px) {
   .studio-card {
     grid-template-columns: 6rem minmax(0, 1fr) 12rem;

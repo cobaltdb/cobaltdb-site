@@ -30,6 +30,8 @@ The build includes a small Windows export normalization for [Next.js #85374](htt
 
 The header's sun/moon control offers **System**, **Light**, and **Dark** themes. A saved preference is applied before hydration, synchronizes across tabs, and survives navigation/reloads. With no preference (or no JavaScript), CSS follows the operating system. Storage failures do not prevent switching themes for the current page. Theme colors and SVG illustration tokens live in `src/app/themes.css`; the footer's OXOGNET studio card lives in `src/components/studio.tsx`.
 
+Large-screen layouts use roughly 79% of the viewport, capped at a proportional 3040px composition on native 4K, with larger reading sizes and a two-column studio project grid. Documentation retains a bounded reading column. Regression checks include 1920, 2560, 3072 and 3840px to cover common 4K display scaling.
+
 - `src/lib/site.ts`: links, version, snippets and search entries.
 - `src/lib/docs.tsx`: source-aligned local developer guides.
 - `src/components/database-art.tsx`: original isometric SVG hero illustration.

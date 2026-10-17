@@ -249,10 +249,42 @@ test("4K layout uses the screen while keeping text and artwork balanced", async 
       artLeft: art.getBoundingClientRect().left,
     };
   });
-  expect(layout.width).toBeGreaterThanOrEqual(2200);
-  expect(layout.width).toBeLessThanOrEqual(2800);
+  expect(layout.width).toBeGreaterThanOrEqual(2900);
+  expect(layout.width).toBeLessThanOrEqual(3240);
   expect(layout.fontSize).toBeGreaterThanOrEqual(110);
   expect(layout.headingRight).toBeLessThanOrEqual(layout.artLeft + 32);
+});
+
+test("large layouts retain useful width and readable text at common 4K display scales", async ({
+  page,
+}) => {
+  for (const width of [1920, 2560, 3072, 3840]) {
+    await page.setViewportSize({ width, height: Math.round((width * 9) / 16) });
+    await page.goto("/");
+    await page.evaluate(() => document.fonts.ready);
+    const layout = await page.evaluate(() => {
+      const hero = document.querySelector(".hero");
+      const copy = document.querySelector(".hero-detail");
+      const studio = document.querySelector(".studio-projects");
+      if (!hero || !copy || !studio) throw new Error("Page content is missing");
+      const bounds = hero.getBoundingClientRect();
+      return {
+        ratio: bounds.width / innerWidth,
+        left: bounds.left,
+        right: innerWidth - bounds.right,
+        font: parseFloat(getComputedStyle(copy).fontSize),
+        projectColumns:
+          getComputedStyle(studio).gridTemplateColumns.split(" ").length,
+      };
+    });
+    expect(layout.ratio, `${width}px content width`).toBeGreaterThanOrEqual(
+      0.76,
+    );
+    expect(layout.ratio).toBeLessThanOrEqual(0.85);
+    expect(Math.abs(layout.left - layout.right)).toBeLessThanOrEqual(1);
+    expect(layout.projectColumns).toBe(2);
+    if (width === 3840) expect(layout.font).toBeGreaterThanOrEqual(30);
+  }
 });
 
 test("narrow phones have comfortable controls, readable copy and working navigation", async ({

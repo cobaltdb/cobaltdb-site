@@ -28,6 +28,14 @@ The GitHub Pages workflow independently installs from the lockfile, lints, type-
 - `npm run lint`, `npm run typecheck` and `npm run build` passed. The complete suite passed **66 tests**, with zero failures/skips across desktop, mobile and 4K projects. Both themes pass automated WCAG A/AA checks on home, five guides, brand assets and search.
 - Inspected light/dark footer screenshots and dark home/brand/mobile layouts. Studio and header controls fit 320–3840px; no dependency was added.
 
+## Wider 4K composition follow-up
+
+- Increased the main content width from 2480px to **3040px** at 3840×2160, with proportionally bounded widths at 1920, 2560 and 3072px. These viewport widths cover common CSS viewport sizes produced by 4K display scaling.
+- Large-screen introductory text is 32px and section copy is 30px at native 4K. Enlarged controls, code samples, navigation and footer text; kept the existing mobile rules and bounded documentation reading width.
+- The OXOGNET card now uses a wider composition and a two-column project grid on large viewports. Inspected native 4K screenshots in both themes.
+- The expanded width checks failed on the previous design (2480px and a one-column studio project list), then passed after this update.
+- Lint, type check and production build passed. `npx playwright test --workers=2` passed **69 tests**, zero failures/skips. The earlier four-worker run had two unexpected worker-process exits before those tests executed; the complete suite was rerun with the same concurrency as CI, without weakening assertions or adding retries.
+
 ## Upstream database sample
 
 The complete in-memory quickstart was run using Go 1.27.0 on Windows against upstream CobaltDB commit `ed947ca8e7ba4d950fff02ec532dc5cb4cfba201`; it printed `Hello, CobaltDB!`.

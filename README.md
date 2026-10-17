@@ -28,6 +28,8 @@ The build includes a small Windows export normalization for [Next.js #85374](htt
 
 ## Content and brand
 
+The header's sun/moon control offers **System**, **Light**, and **Dark** themes. A saved preference is applied before hydration, synchronizes across tabs, and survives navigation/reloads. With no preference (or no JavaScript), CSS follows the operating system. Storage failures do not prevent switching themes for the current page. Theme colors and SVG illustration tokens live in `src/app/themes.css`; the footer's OXOGNET studio card lives in `src/components/studio.tsx`.
+
 - `src/lib/site.ts`: links, version, snippets and search entries.
 - `src/lib/docs.tsx`: source-aligned local developer guides.
 - `src/components/database-art.tsx`: original isometric SVG hero illustration.

@@ -29,8 +29,8 @@ export function DatabaseArt() {
             <stop offset="1" stopColor="#2e64ef" />
           </linearGradient>
           <linearGradient id="platform" x1="180" y1="350" x2="460" y2="430">
-            <stop stopColor="#eaf0ff" />
-            <stop offset="1" stopColor="#cedcfc" />
+            <stop stopColor="var(--art-platform-start, #eaf0ff)" />
+            <stop offset="1" stopColor="var(--art-platform-end, #cedcfc)" />
           </linearGradient>
           <filter id="db-shadow" x="-50%" y="-50%" width="200%" height="220%">
             <feGaussianBlur stdDeviation="15" />
@@ -42,7 +42,11 @@ export function DatabaseArt() {
             patternUnits="userSpaceOnUse"
             patternTransform="matrix(1 .5 -1 .5 310 65)"
           >
-            <path d="M0 0h36v36" stroke="#b8c8e9" strokeWidth=".7" />
+            <path
+              d="M0 0h36v36"
+              stroke="var(--art-grid, #b8c8e9)"
+              strokeWidth=".7"
+            />
           </pattern>
         </defs>
         <rect
@@ -53,7 +57,11 @@ export function DatabaseArt() {
           fill="url(#art-grid)"
           opacity=".45"
         />
-        <g className="art-connections" stroke="#91a9db" strokeWidth="1.4">
+        <g
+          className="art-connections"
+          stroke="var(--art-line, #91a9db)"
+          strokeWidth="1.4"
+        >
           <path d="m96 205 110 55v62l94 47" />
           <path d="m431 232 92-46v-64" />
           <path d="m391 362 131 66v-66" />
@@ -94,18 +102,18 @@ export function DatabaseArt() {
         />
         <path
           d="m156 363 162-81 164 82v18l-164 83-162-83Z"
-          fill="#c4d4f7"
-          stroke="#adc2ed"
+          fill="var(--art-platform-side, #c4d4f7)"
+          stroke="var(--art-line, #adc2ed)"
         />
         <path
           d="m156 363 162-81 164 82-164 83Z"
           fill="url(#platform)"
-          stroke="#b2c7f0"
+          stroke="var(--art-line, #b2c7f0)"
         />
         <path
           d="m183 362 135-67 136 68-136 68Z"
-          fill="#f6f8ff"
-          stroke="#b8cbf2"
+          fill="var(--art-platform-top, #f6f8ff)"
+          stroke="var(--art-line, #b8cbf2)"
         />
         <g className="art-core">
           <path
@@ -172,14 +180,21 @@ export function DatabaseArt() {
         <g className="art-chip art-chip-one">
           <path
             d="m47 150 53-27 54 27v38l-54 28-53-28Z"
-            fill="#e9efff"
-            stroke="#b3c7ee"
+            fill="var(--art-chip-side, #e9efff)"
+            stroke="var(--art-line, #b3c7ee)"
           />
-          <path d="m47 150 53 27 54-27M100 177v39" stroke="#b3c7ee" />
-          <path d="m47 150 53-27 54 27-54 27Z" fill="#fff" stroke="#b3c7ee" />
+          <path
+            d="m47 150 53 27 54-27M100 177v39"
+            stroke="var(--art-line, #b3c7ee)"
+          />
+          <path
+            d="m47 150 53-27 54 27-54 27Z"
+            fill="var(--art-chip-top, #fff)"
+            stroke="var(--art-line, #b3c7ee)"
+          />
           <text
             transform="matrix(.95 .48 -.9 .5 82 144)"
-            fill="#2153b1"
+            fill="var(--art-chip-ink, #2153b1)"
             fontSize="19"
             fontWeight="600"
             fontFamily="monospace"
@@ -191,14 +206,21 @@ export function DatabaseArt() {
         <g className="art-chip art-chip-two">
           <path
             d="m470 78 53-27 54 27v34l-54 28-53-28Z"
-            fill="#e9efff"
-            stroke="#b3c7ee"
+            fill="var(--art-chip-side, #e9efff)"
+            stroke="var(--art-line, #b3c7ee)"
           />
-          <path d="m470 78 53 27 54-27M523 105v35" stroke="#b3c7ee" />
-          <path d="m470 78 53-27 54 27-54 27Z" fill="#fff" stroke="#b3c7ee" />
+          <path
+            d="m470 78 53 27 54-27M523 105v35"
+            stroke="var(--art-line, #b3c7ee)"
+          />
+          <path
+            d="m470 78 53-27 54 27-54 27Z"
+            fill="var(--art-chip-top, #fff)"
+            stroke="var(--art-line, #b3c7ee)"
+          />
           <text
             transform="matrix(.95 .48 -.9 .5 508 71)"
-            fill="#2153b1"
+            fill="var(--art-chip-ink, #2153b1)"
             fontSize="18"
             fontWeight="600"
             fontFamily="monospace"
@@ -209,21 +231,28 @@ export function DatabaseArt() {
         <g className="art-chip art-chip-three">
           <path
             d="m470 305 53-27 54 27v34l-54 28-53-28Z"
-            fill="#e9efff"
-            stroke="#b3c7ee"
+            fill="var(--art-chip-side, #e9efff)"
+            stroke="var(--art-line, #b3c7ee)"
           />
-          <path d="m470 305 53 27 54-27M523 332v35" stroke="#b3c7ee" />
-          <path d="m470 305 53-27 54 27-54 27Z" fill="#fff" stroke="#b3c7ee" />
+          <path
+            d="m470 305 53 27 54-27M523 332v35"
+            stroke="var(--art-line, #b3c7ee)"
+          />
+          <path
+            d="m470 305 53-27 54 27-54 27Z"
+            fill="var(--art-chip-top, #fff)"
+            stroke="var(--art-line, #b3c7ee)"
+          />
           <text
             transform="matrix(.95 .48 -.9 .5 504 297)"
-            fill="#2153b1"
+            fill="var(--art-chip-ink, #2153b1)"
             fontSize="17"
             fontWeight="600"
             fontFamily="monospace"
           >{`{ }`}</text>
         </g>
         <g
-          fill="#687eaa"
+          fill="var(--art-label, #687eaa)"
           fontSize="10"
           letterSpacing="1.5"
           fontFamily="monospace"
@@ -242,17 +271,35 @@ export function DatabaseArt() {
           </text>
         </g>
         <g>
-          <circle cx="117" cy="354" r="5" fill="#fff" stroke="#8faadc" />
-          <circle cx="235" cy="29" r="5" fill="#fff" stroke="#8faadc" />
+          <circle
+            cx="117"
+            cy="354"
+            r="5"
+            fill="var(--art-chip-top, #fff)"
+            stroke="var(--art-line, #8faadc)"
+          />
+          <circle
+            cx="235"
+            cy="29"
+            r="5"
+            fill="var(--art-chip-top, #fff)"
+            stroke="var(--art-line, #8faadc)"
+          />
         </g>
         <g transform="translate(51 435)">
-          <rect width="121" height="28" rx="14" fill="#fff" stroke="#d6e0f3" />
+          <rect
+            width="121"
+            height="28"
+            rx="14"
+            fill="var(--art-chip-top, #fff)"
+            stroke="var(--art-line, #d6e0f3)"
+          />
           <circle cx="15" cy="14" r="3" fill="#2c9968" />
           <text
             x="25"
             y="18"
             fontSize="10"
-            fill="#50627e"
+            fill="var(--art-label, #50627e)"
             fontFamily="monospace"
           >
             CGO_ENABLED=0

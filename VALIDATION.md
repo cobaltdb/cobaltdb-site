@@ -21,6 +21,13 @@ The GitHub Pages workflow independently installs from the lockfile, lints, type-
 - New layout checks failed on the previous design (1240px content on 4K and a 16px search target) and passed after the update. The production build, type check and lint are clean.
 - Visually inspected screenshots at 320×844, 390×844, 2560×1440 and 3840×2160, including the 4K documentation layout. Earlier Lighthouse numbers above describe the initial launch; they were not remeasured for this CSS update.
 
+## Themes and studio footer follow-up
+
+- Added the OXOGNET studio mark, company introduction and verified ecosystem project links, adapted from the NineDeploy footer and the current OXOGNET project catalog.
+- Added System/Light/Dark selection, pre-hydration saved preferences, cross-tab updates and CSS system-theme support without JavaScript. Storage-blocked switching and native keyboard selection were exercised.
+- `npm run lint`, `npm run typecheck` and `npm run build` passed. The complete suite passed **66 tests**, with zero failures/skips across desktop, mobile and 4K projects. Both themes pass automated WCAG A/AA checks on home, five guides, brand assets and search.
+- Inspected light/dark footer screenshots and dark home/brand/mobile layouts. Studio and header controls fit 320–3840px; no dependency was added.
+
 ## Upstream database sample
 
 The complete in-memory quickstart was run using Go 1.27.0 on Windows against upstream CobaltDB commit `ed947ca8e7ba4d950fff02ec532dc5cb4cfba201`; it printed `Hello, CobaltDB!`.

@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUpRight, BookOpen, Command, Menu, Search, X } from "lucide-react";
 import { Logo } from "./logo";
 import { REPO, searchItems } from "@/lib/site";
+import { ThemePicker } from "./theme-picker";
 
 export function Navigation() {
   const [menu, setMenu] = useState(false);
@@ -59,6 +60,7 @@ export function Navigation() {
             <Link href="/#benchmarks">Benchmarks</Link>
           </nav>
           <div className="header-actions">
+            <ThemePicker />
             <button
               type="button"
               className="search-trigger"

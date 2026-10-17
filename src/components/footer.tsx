@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { Logo } from "./logo";
 import { REPO } from "@/lib/site";
+import { Studio } from "./studio";
 
 export function Footer() {
   return (
@@ -48,6 +49,7 @@ export function Footer() {
           <Link href="/brand/">Brand assets</Link>
         </div>
       </div>
+      <Studio />
       <div className="container footer-bottom">
         <span>© {new Date().getFullYear()} CobaltDB contributors</span>
         <a href={`${REPO}/blob/main/LICENSE`}>MIT licensed</a>

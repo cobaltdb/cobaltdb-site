@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
+import "./themes.css";
 
 const manrope = localFont({
   src: "../../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2",
@@ -48,7 +49,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${manrope.variable} ${spaceGrotesk.variable}`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${manrope.variable} ${spaceGrotesk.variable}`}
+    >
+      <head>
+        <script>{`try{var t=localStorage.getItem('cobaltdb-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch{}`}</script>
+      </head>
       <body>
         <a className="skip-link" href="#main">
           Skip to content

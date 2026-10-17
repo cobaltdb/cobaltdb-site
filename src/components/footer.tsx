@@ -1,0 +1,64 @@
+import { Github } from "@/components/github-icon";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import { Logo } from "./logo";
+import { REPO } from "@/lib/site";
+
+export function Footer() {
+  return (
+    <footer className="site-footer">
+      <div className="container footer-main">
+        <div className="footer-brand">
+          <Link href="/" aria-label="CobaltDB home">
+            <Logo />
+          </Link>
+          <p>
+            A serious database.
+            <br />A simpler way to build.
+          </p>
+          <span className="built-go">
+            <span />
+            Built in Go. Open by design.
+          </span>
+        </div>
+        <div className="footer-column">
+          <h3>Product</h3>
+          <Link href="/#features">Features</Link>
+          <Link href="/#benchmarks">Benchmarks</Link>
+          <a href={`${REPO}/releases`}>
+            Releases
+            <ArrowUpRight size={12} />
+          </a>
+        </div>
+        <div className="footer-column">
+          <h3>Developers</h3>
+          <Link href="/docs/getting-started/">Quick start</Link>
+          <Link href="/docs/sql/">SQL reference</Link>
+          <Link href="/docs/architecture/">Architecture</Link>
+          <Link href="/docs/production/">Production guide</Link>
+        </div>
+        <div className="footer-column">
+          <h3>Open source</h3>
+          <a href={REPO}>
+            GitHub
+            <ArrowUpRight size={12} />
+          </a>
+          <a href={`${REPO}/blob/main/CONTRIBUTING.md`}>Contributing</a>
+          <a href={`${REPO}/issues`}>Issues & discussions</a>
+          <Link href="/brand/">Brand assets</Link>
+        </div>
+      </div>
+      <div className="container footer-bottom">
+        <span>© {new Date().getFullYear()} CobaltDB contributors</span>
+        <a href={`${REPO}/blob/main/LICENSE`}>MIT licensed</a>
+        <a href={REPO} aria-label="CobaltDB on GitHub">
+          <Github size={17} />
+        </a>
+        <a href="https://github.com/cobaltdb/cobaltdb-site">
+          Website source
+          <ArrowUpRight size={12} />
+        </a>
+      </div>
+    </footer>
+  );
+}

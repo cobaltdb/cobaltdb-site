@@ -1,0 +1,22 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "files": {
+    "includes": [
+      "src/**/*.ts",
+      "src/**/*.tsx",
+      "scripts/**/*.mjs",
+      "tests/**/*.ts",
+      "*.ts"
+    ]
+  },
+  "formatter": { "enabled": false },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "a11y": { "useSemanticElements": "off" },
+      "suspicious": { "noArrayIndexKey": "off" }
+    }
+  },
+  "assist": { "enabled": false }
+}

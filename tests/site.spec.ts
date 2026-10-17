@@ -217,7 +217,7 @@ test("logo downloads are portable SVG and missing pages return 404", async ({
 });
 
 test("home fits phone, tablet and large desktop widths", async ({ page }) => {
-  for (const width of [320, 360, 375, 680, 768, 1024, 1920]) {
+  for (const width of [320, 360, 375, 680, 768, 1024, 1920, 2560, 3440, 3840]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     await page.evaluate(() => document.fonts.ready);
@@ -227,6 +227,67 @@ test("home fits phone, tablet and large desktop widths", async ({ page }) => {
       ),
       `${width}px viewport`,
     ).toBeLessThanOrEqual(1);
+  }
+});
+
+test("4K layout uses the screen while keeping text and artwork balanced", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 3840, height: 2160 });
+  await page.goto("/");
+  await page.evaluate(() => document.fonts.ready);
+  const layout = await page.evaluate(() => {
+    const hero = document.querySelector(".hero");
+    const heading = hero?.querySelector("h1");
+    const art = hero?.querySelector(".database-art");
+    if (!hero || !heading || !art)
+      throw new Error("The hero content or illustration is missing");
+    return {
+      width: hero.getBoundingClientRect().width,
+      fontSize: parseFloat(getComputedStyle(heading).fontSize),
+      headingRight: heading.getBoundingClientRect().right,
+      artLeft: art.getBoundingClientRect().left,
+    };
+  });
+  expect(layout.width).toBeGreaterThanOrEqual(2200);
+  expect(layout.width).toBeLessThanOrEqual(2800);
+  expect(layout.fontSize).toBeGreaterThanOrEqual(110);
+  expect(layout.headingRight).toBeLessThanOrEqual(layout.artLeft + 32);
+});
+
+test("narrow phones have comfortable controls, readable copy and working navigation", async ({
+  page,
+}) => {
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/");
+    const search = page.getByRole("button", {
+      name: "Search documentation",
+      exact: true,
+    });
+    const menu = page.getByRole("button", { name: "Open menu" });
+    for (const control of [
+      search,
+      menu,
+      page.getByRole("button", { name: "Copy install command" }),
+    ]) {
+      const box = await control.boundingBox();
+      expect(box?.width).toBeGreaterThanOrEqual(44);
+      expect(box?.height).toBeGreaterThanOrEqual(44);
+    }
+    expect(
+      await page
+        .locator(".hero-detail")
+        .evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+    ).toBeGreaterThanOrEqual(13);
+    await menu.click();
+    await page
+      .getByRole("navigation", { name: "Mobile navigation" })
+      .getByRole("link", { name: "Documentation" })
+      .click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Getting started",
+    );
   }
 });
 

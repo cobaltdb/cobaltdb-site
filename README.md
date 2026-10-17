@@ -22,7 +22,7 @@ npm test
 npm run preview
 ```
 
-The production output is `out/`. The preview serves that exact output at http://localhost:3000, including real 404 responses. Browser tests cover desktop/mobile layouts, navigation, search and empty states, copy success/failure, code and query tabs, downloads, keyboard interaction, reduced motion, asset/link integrity, and axe accessibility checks.
+The production output is `out/`. The preview serves that exact output at http://localhost:3000, including real 404 responses. Browser tests run desktop, mobile and native 3840×2160 4K profiles and cover responsive layouts, navigation, search and empty states, copy success/failure, code and query tabs, downloads, keyboard interaction, reduced motion, asset/link integrity, and axe accessibility checks. Layout checks span 320–3840px.
 
 The build includes a small Windows export normalization for [Next.js #85374](https://github.com/vercel/next.js/issues/85374). It copies nested RSC segment output to the flat filenames requested by the browser, preserving originals. On Linux this step is a no-op. The browser asset check guards this behavior.
 

@@ -1,6 +1,6 @@
 # Validation record
 
-Checked on 2026-10-17 using Windows, Node.js 24.13.0, Next.js 16.4.2, React 19.3.1 and Playwright 1.64.1.
+Initial launch checked on 2026-10-17 using Windows, Node.js 24.13.0, Next.js 16.4.2, React 19.3.1 and Playwright 1.64.1.
 
 - `npm run lint`: clean, no warnings.
 - `npm run typecheck`: passed.
@@ -12,6 +12,14 @@ Checked on 2026-10-17 using Windows, Node.js 24.13.0, Next.js 16.4.2, React 19.3
 - Lighthouse mobile simulation against the compressed local production preview: **96 performance / 100 accessibility / 100 best practices / 100 SEO**. FCP 0.9s, LCP 2.7s, TBT 50ms, CLS 0. This is a local lab result, not field data or a promise about the public CDN.
 
 The GitHub Pages workflow independently installs from the lockfile, lints, type-checks, builds and runs the same browser suite on Linux before deployment. Inspect the repository's Actions history for the exact deployed revision.
+
+## Responsive follow-up
+
+- Added a proportional layout scale for large screens, growing the content area from 1240px at 1440px viewport width to 2480px at native 3840px 4K width. Typography, spacing and artwork scale together; content remains centered and bounded.
+- Enlarged mobile search, menu and copy targets to at least 44×44px, increased primary body copy, and stacked calls to action on narrow phones.
+- Added a dedicated 3840×2160 Playwright project. The complete suite now passes **45 tests** across desktop, mobile and 4K, including all page routes and automated accessibility checks. Home reflow is checked at 320, 360, 375, 680, 768, 1024, 1920, 2560, 3440 and 3840px.
+- New layout checks failed on the previous design (1240px content on 4K and a 16px search target) and passed after the update. The production build, type check and lint are clean.
+- Visually inspected screenshots at 320×844, 390×844, 2560×1440 and 3840×2160, including the 4K documentation layout. Earlier Lighthouse numbers above describe the initial launch; they were not remeasured for this CSS update.
 
 ## Upstream database sample
 

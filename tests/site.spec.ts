@@ -323,6 +323,49 @@ test("narrow phones have comfortable controls, readable copy and working navigat
   }
 });
 
+test("studio logo draws on first view and remains complete on return", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const logo = page.locator(".studio-symbol");
+  expect(
+    await logo.evaluate((el) => el.getAnimations({ subtree: true }).length),
+  ).toBe(0);
+  await logo.scrollIntoViewIfNeeded();
+  await expect
+    .poll(() =>
+      logo.evaluate((el) =>
+        el
+          .getAnimations({ subtree: true })
+          .some((animation) => animation.playState === "running"),
+      ),
+    )
+    .toBe(true);
+  await logo.evaluate((el) => {
+    for (const animation of el.getAnimations({ subtree: true }))
+      animation.finish();
+  });
+  const offsets = () =>
+    logo
+      .locator("path")
+      .evaluateAll((paths) =>
+        paths.map((path) => getComputedStyle(path).strokeDashoffset),
+      );
+  expect(await offsets()).toEqual(["0px", "0px", "0px", "0px"]);
+  await page
+    .getByRole("heading", { name: /Small footprint/ })
+    .scrollIntoViewIfNeeded();
+  await logo.scrollIntoViewIfNeeded();
+  expect(
+    await logo.evaluate((el) =>
+      el
+        .getAnimations({ subtree: true })
+        .every((animation) => animation.playState === "finished"),
+    ),
+  ).toBe(true);
+  expect(await offsets()).toEqual(["0px", "0px", "0px", "0px"]);
+});
+
 test("reduced motion disables decorative animation", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
@@ -336,6 +379,18 @@ test("reduced motion disables decorative animation", async ({ page }) => {
       .locator(".art-packets")
       .evaluate((el) => getComputedStyle(el).display),
   ).toBe("none");
+  const logo = page.locator(".studio-symbol");
+  await logo.scrollIntoViewIfNeeded();
+  expect(
+    await logo.evaluate((el) => el.getAnimations({ subtree: true }).length),
+  ).toBe(0);
+  expect(
+    await logo
+      .locator("path")
+      .evaluateAll((paths) =>
+        paths.map((path) => getComputedStyle(path).strokeDashoffset),
+      ),
+  ).toEqual(["0px", "0px", "0px", "0px"]);
 });
 
 test("home, docs, brand and search pass WCAG AA automated checks", async ({

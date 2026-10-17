@@ -198,6 +198,15 @@ test("OS dark styling is readable before JavaScript runs", async ({
     await expect(
       page.getByRole("heading", { name: /oxog\s*net\s*\./ }),
     ).toBeVisible();
+    const logo = page.locator(".studio-symbol");
+    await expect(logo).toBeVisible();
+    expect(
+      await logo
+        .locator("path")
+        .evaluateAll((paths) =>
+          paths.map((path) => getComputedStyle(path).strokeDashoffset),
+        ),
+    ).toEqual(["0px", "0px", "0px", "0px"]);
   } finally {
     await context.close();
   }

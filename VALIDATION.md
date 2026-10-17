@@ -48,3 +48,9 @@ A separate persistent-mode smoke check with `engine.Open("app.db", nil)` failed 
 - Used native radio keyboard behavior, selected-option focus on opening, Escape focus restoration, and outside pointer/focus dismissal. Preserved saved preferences, OS appearance, cross-tab updates, pre-hydration initialization and storage-blocked operation.
 - Verified open-panel bounds and 44px choice targets at 320, 390, 768, 1024, 1440 and 3840px. Inspected light/dark screenshots at 390, 1440 and 3840px. Reduced motion disables the panel animation.
 - Formatting, lint, type check and production build passed. The full browser suite passed **75 tests**, zero failures/skips, with two workers across desktop, mobile and 4K. Added keyboard/dismissal and open-panel accessibility coverage; both settled palettes pass automated WCAG A/AA checks. Existing all-page, persistence and storage-error checks remain in the suite.
+
+## OXOGNET signature animation follow-up
+
+- Matched NineDeploy's four-stroke signature animation: 1.6-second drawing with 0, 0.25, 0.5 and 0.9-second delays. An intersection observer starts it on first view and disconnects; scrolling back does not replay it.
+- The server-rendered SVG remains complete without JavaScript or intersection-observer support. Reduced-motion styling exposes all strokes immediately, including if the preference changes while drawing.
+- The new viewport/replay check failed against the previous static mark and passed after the update. Lint, type check and production build passed; **78 browser tests passed**, zero failures/skips, across desktop, mobile and native 4K with two workers. Coverage includes first-view drawing, completed strokes on return, reduced motion and the JavaScript-disabled fallback.

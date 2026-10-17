@@ -32,6 +32,8 @@ The header's appearance control shows the current preference and opens **Light**
 
 Large-screen layouts use roughly 79% of the viewport, capped at a proportional 3040px composition on native 4K, with larger reading sizes and a two-column studio project grid. Documentation retains a bounded reading column. Regression checks include 1920, 2560, 3072 and 3840px to cover common 4K display scaling.
 
+The OXOGNET footer mark draws its four strokes once when it enters the viewport, using NineDeploy's signature timing (1.6 seconds per stroke, staggered through 2.5 seconds). Reduced motion and JavaScript-disabled visits show the complete static mark. The animation lives in `src/components/oxog-mark.tsx` and `src/app/themes.css`.
+
 - `src/lib/site.ts`: links, version, snippets and search entries.
 - `src/lib/docs.tsx`: source-aligned local developer guides.
 - `src/components/database-art.tsx`: original isometric SVG hero illustration.

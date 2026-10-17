@@ -28,9 +28,20 @@ The build includes a small Windows export normalization for [Next.js #85374](htt
 
 ## Content and brand
 
-The header's appearance control shows the current preference and opens **Light**, **Dark**, and **System** preview cards. Native radio controls support arrow keys and instant preview; Escape restores focus, and clicking or tabbing outside dismisses the panel. The control uses an icon on smaller screens and scales with the 4K layout. A saved preference is applied before hydration, synchronizes across tabs, and survives navigation/reloads. With no preference (or no JavaScript), CSS follows the operating system. Storage failures do not prevent switching themes for the current page. Theme colors and SVG illustration tokens live in `src/app/themes.css`; the footer's OXOGNET studio card lives in `src/components/studio.tsx`.
+The header's appearance control shows the current preference and opens **Light**, **Dark**, and **System** preview cards. Native radio controls support arrow keys and instant preview; Escape restores focus, and clicking or tabbing outside dismisses the panel. The control uses an icon on smaller screens and keeps a consistent reading scale on larger displays. A saved preference is applied before hydration, synchronizes across tabs, and survives navigation/reloads. With no preference (or no JavaScript), CSS follows the operating system. Storage failures do not prevent switching themes for the current page. Theme colors and SVG illustration tokens live in `src/app/themes.css`; the footer's OXOGNET studio card lives in `src/components/studio.tsx`.
 
-Large-screen layouts use roughly 79% of the viewport, capped at a proportional 3040px composition on native 4K, with larger reading sizes and a two-column studio project grid. Documentation retains a bounded reading column. Regression checks include 1920, 2560, 3072 and 3840px to cover common 4K display scaling.
+All pages share a fluid `.container` / `.header-inner` shell, capped at **1728px**. There is no viewport-driven root font scaling. Header, main sections, documentation, brand assets and footer use the same horizontal edges. Shared variables in `src/app/globals.css` control the maximum width, fluid side gutters, grid gaps, section spacing, panel padding and a 64ch prose measure.
+
+| Viewport | Container | Side margin |
+| -------- | --------- | ----------- |
+| 375px    | 327px     | 24px        |
+| 768px    | 716.8px   | 25.6px      |
+| 1024px   | 955.7px   | 34.1px      |
+| 1440px   | 1344px    | 48px        |
+| 1920px   | 1728px    | 96px        |
+| 2560px   | 1728px    | 416px       |
+
+At wider breakpoints, feature cards stack beside the architecture panel, query editing/results can share a row, documentation guides form an adaptive card grid, and studio projects use two columns. Documentation prose stays bounded while code blocks and tables use the article area. Browser checks cover all eight public page routes at the six viewport widths above, plus the native 4K composition and existing small-phone checks.
 
 The OXOGNET footer mark draws its four strokes once when it enters the viewport, using NineDeploy's signature timing (1.6 seconds per stroke, staggered through 2.5 seconds). Reduced motion and JavaScript-disabled visits show the complete static mark. The animation lives in `src/components/oxog-mark.tsx` and `src/app/themes.css`.
 

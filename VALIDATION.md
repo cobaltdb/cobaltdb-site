@@ -54,3 +54,13 @@ A separate persistent-mode smoke check with `engine.Open("app.db", nil)` failed 
 - Matched NineDeploy's four-stroke signature animation: 1.6-second drawing with 0, 0.25, 0.5 and 0.9-second delays. An intersection observer starts it on first view and disconnects; scrolling back does not replay it.
 - The server-rendered SVG remains complete without JavaScript or intersection-observer support. Reduced-motion styling exposes all strokes immediately, including if the preference changes while drawing.
 - The new viewport/replay check failed against the previous static mark and passed after the update. Lint, type check and production build passed; **78 browser tests passed**, zero failures/skips, across desktop, mobile and native 4K with two workers. Coverage includes first-view drawing, completed strokes on return, reduced motion and the JavaScript-disabled fallback.
+
+## Fluid layout revision — 2026-10-18
+
+This revision supersedes the earlier proportional 3040px / root-font scaling approach above. The current requirement caps the main composition in the 1680–1750px range.
+
+- Unified `.container` and `.header-inner` around a fluid shell capped at **1728px**, with shared gutter, gap, section-space, panel-space and prose-measure variables. Removed competing header/docs max-width limits, viewport-driven root font scaling and illustration oversizing.
+- Measured container widths of **327, 716.8, 955.7, 1344, 1728 and 1728px** at **375, 768, 1024, 1440, 1920 and 2560px** respectively. All eight public page routes share the header/footer horizontal edges and have zero horizontal document overflow at these widths.
+- Wide feature cards sit beside the architecture panel, the query editor/results adapt into columns, the documentation index uses responsive guide cards, and OXOGNET projects use two columns. Paragraphs retain a 64ch limit while documentation code/tables can use the wider article area. Mobile action spacing avoids an unnecessary row break at 375px and keeps 44px control targets.
+- The new layout checks failed on the previous design (including a 40px header/main alignment mismatch at 1440px). The expanded mobile-row check also reproduced its wrap before the final spacing adjustment, then passed afterward.
+- Lint, type check, formatting and production export passed. The complete suite passed **78 tests**, zero failures/skips, across desktop, mobile and 4K. After the final mobile spacing adjustment, the **9** focused layout, prose/grid and narrow-phone checks passed again across all three profiles. Both themes retain automated WCAG A/AA coverage. Inspected light/dark captures at all six requested widths, plus guide, query, feature and studio layouts.

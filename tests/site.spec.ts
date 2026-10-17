@@ -217,7 +217,9 @@ test("logo downloads are portable SVG and missing pages return 404", async ({
 });
 
 test("home fits phone, tablet and large desktop widths", async ({ page }) => {
-  for (const width of [320, 360, 375, 680, 768, 1024, 1920, 2560, 3440, 3840]) {
+  for (const width of [
+    320, 360, 375, 680, 768, 1024, 1440, 1920, 2560, 3440, 3840,
+  ]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     await page.evaluate(() => document.fonts.ready);
@@ -230,67 +232,142 @@ test("home fits phone, tablet and large desktop widths", async ({ page }) => {
   }
 });
 
-test("4K layout uses the screen while keeping text and artwork balanced", async ({
+test("shared layout stays aligned and bounded at the requested viewports", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 3840, height: 2160 });
-  await page.goto("/");
-  await page.evaluate(() => document.fonts.ready);
-  const layout = await page.evaluate(() => {
-    const hero = document.querySelector(".hero");
-    const heading = hero?.querySelector("h1");
-    const art = hero?.querySelector(".database-art");
-    if (!hero || !heading || !art)
-      throw new Error("The hero content or illustration is missing");
-    return {
-      width: hero.getBoundingClientRect().width,
-      fontSize: parseFloat(getComputedStyle(heading).fontSize),
-      headingRight: heading.getBoundingClientRect().right,
-      artLeft: art.getBoundingClientRect().left,
-    };
-  });
-  expect(layout.width).toBeGreaterThanOrEqual(2900);
-  expect(layout.width).toBeLessThanOrEqual(3240);
-  expect(layout.fontSize).toBeGreaterThanOrEqual(110);
-  expect(layout.headingRight).toBeLessThanOrEqual(layout.artLeft + 32);
+  test.setTimeout(90_000);
+  for (const width of [375, 768, 1024, 1440, 1920, 2560]) {
+    await page.setViewportSize({ width, height: 1000 });
+    for (const route of [
+      "/",
+      "/docs/",
+      "/docs/getting-started/",
+      "/docs/sql/",
+      "/docs/architecture/",
+      "/docs/server/",
+      "/docs/production/",
+      "/brand/",
+    ]) {
+      await page.goto(route);
+      await page.evaluate(() => document.fonts.ready);
+      const layout = await page.evaluate(() => {
+        const header = document.querySelector(".header-inner");
+        if (!header) throw new Error("Header is missing");
+        const bounds = header.getBoundingClientRect();
+        return {
+          overflow: document.documentElement.scrollWidth - innerWidth,
+          width: bounds.width,
+          left: bounds.left,
+          right: innerWidth - bounds.right,
+          rootFont: parseFloat(
+            getComputedStyle(document.documentElement).fontSize,
+          ),
+          containers: [...document.querySelectorAll(".container")].map((el) => {
+            const rect = el.getBoundingClientRect();
+            return {
+              name: el.className,
+              left: rect.left,
+              right: rect.right,
+              width: rect.width,
+            };
+          }),
+        };
+      });
+      expect(layout.overflow, `${width}px ${route}`).toBeLessThanOrEqual(1);
+      expect(Math.abs(layout.left - layout.right)).toBeLessThanOrEqual(1);
+      expect(layout.rootFont).toBe(16);
+      if (width >= 1920) {
+        expect(layout.width).toBeGreaterThanOrEqual(1680);
+        expect(layout.width).toBeLessThanOrEqual(1750);
+      }
+      if (width === 1440) expect(layout.width).toBeGreaterThanOrEqual(1300);
+      for (const box of layout.containers) {
+        expect(
+          Math.abs(box.left - layout.left),
+          `${width}px ${route}: ${box.name} left`,
+        ).toBeLessThanOrEqual(1);
+        expect(
+          Math.abs(box.right - (width - layout.right)),
+          `${width}px ${route}: ${box.name} right`,
+        ).toBeLessThanOrEqual(1);
+        expect(box.width).toBeLessThanOrEqual(width);
+      }
+    }
+  }
 });
 
-test("large layouts retain useful width and readable text at common 4K display scales", async ({
+test("wide compositions use columns while keeping prose readable", async ({
   page,
 }) => {
-  for (const width of [1920, 2560, 3072, 3840]) {
-    await page.setViewportSize({ width, height: Math.round((width * 9) / 16) });
+  for (const width of [1440, 1920, 2560, 3840]) {
+    await page.setViewportSize({ width, height: 1080 });
     await page.goto("/");
-    await page.evaluate(() => document.fonts.ready);
     const layout = await page.evaluate(() => {
-      const hero = document.querySelector(".hero");
-      const copy = document.querySelector(".hero-detail");
-      const studio = document.querySelector(".studio-projects");
-      if (!hero || !copy || !studio) throw new Error("Page content is missing");
-      const bounds = hero.getBoundingClientRect();
+      const bounds = (selector: string) => {
+        const el = document.querySelector(selector);
+        if (!el) throw new Error(`${selector} is missing`);
+        const rect = el.getBoundingClientRect();
+        return {
+          x: rect.x,
+          y: rect.y,
+          right: rect.right,
+          width: rect.width,
+          font: parseFloat(getComputedStyle(el).fontSize),
+        };
+      };
       return {
-        ratio: bounds.width / innerWidth,
-        left: bounds.left,
-        right: innerWidth - bounds.right,
-        font: parseFloat(getComputedStyle(copy).fontSize),
-        projectColumns:
-          getComputedStyle(studio).gridTemplateColumns.split(" ").length,
+        hero: bounds(".hero"),
+        heading: bounds(".hero h1"),
+        art: bounds(".database-art"),
+        copy: bounds(".hero-detail"),
+        feature: bounds(".feature-architecture"),
+        card: bounds(".feature-card"),
+        editor: bounds(".query-editor"),
+        results: bounds(".query-results"),
+        projects: getComputedStyle(
+          document.querySelector(".studio-projects") as Element,
+        ).gridTemplateColumns.split(" ").length,
       };
     });
-    expect(layout.ratio, `${width}px content width`).toBeGreaterThanOrEqual(
-      0.76,
+    expect(layout.hero.width).toBeLessThanOrEqual(1750);
+    expect(layout.heading.font).toBeLessThanOrEqual(88);
+    expect(layout.heading.right).toBeLessThanOrEqual(layout.art.x + 1);
+    expect(layout.copy.width).toBeLessThanOrEqual(620);
+    expect(layout.copy.font).toBeGreaterThanOrEqual(15);
+    expect(Math.abs(layout.feature.y - layout.card.y)).toBeLessThanOrEqual(1);
+    expect(layout.projects).toBe(2);
+    if (width >= 1920) {
+      expect(Math.abs(layout.editor.y - layout.results.y)).toBeLessThanOrEqual(
+        1,
+      );
+      expect(layout.results.x).toBeGreaterThan(layout.editor.x);
+    }
+    await page.goto("/docs/sql/");
+    const prose = await page.locator(".docs-section p").evaluateAll((els) =>
+      els.map((el) => ({
+        width: el.getBoundingClientRect().width,
+        font: parseFloat(getComputedStyle(el).fontSize),
+      })),
     );
-    expect(layout.ratio).toBeLessThanOrEqual(0.85);
-    expect(Math.abs(layout.left - layout.right)).toBeLessThanOrEqual(1);
-    expect(layout.projectColumns).toBe(2);
-    if (width === 3840) expect(layout.font).toBeGreaterThanOrEqual(30);
+    expect(prose.length).toBeGreaterThan(0);
+    for (const paragraph of prose)
+      expect(paragraph.width / paragraph.font).toBeLessThanOrEqual(40);
+    const article = await page.locator(".docs-article").boundingBox();
+    expect(article?.width).toBeGreaterThan(900);
+    await page.goto("/docs/");
+    const cards = await page
+      .getByRole("navigation", { name: "Documentation guides" })
+      .getByRole("link")
+      .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().y));
+    expect(cards).toHaveLength(5);
+    expect(Math.max(...cards) - Math.min(...cards)).toBeLessThanOrEqual(1);
   }
 });
 
 test("narrow phones have comfortable controls, readable copy and working navigation", async ({
   page,
 }) => {
-  for (const width of [320, 390]) {
+  for (const width of [320, 375, 390]) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto("/");
     const search = page.getByRole("button", {
@@ -312,6 +389,17 @@ test("narrow phones have comfortable controls, readable copy and working navigat
         .locator(".hero-detail")
         .evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
     ).toBeGreaterThanOrEqual(13);
+    if (width >= 375) {
+      const buttonTops = await page
+        .locator(".hero-buttons .button")
+        .evaluateAll((buttons) =>
+          buttons.map((button) => button.getBoundingClientRect().top),
+        );
+      expect(
+        Math.max(...buttonTops) - Math.min(...buttonTops),
+        `${width}px hero actions`,
+      ).toBeLessThanOrEqual(1);
+    }
     await menu.click();
     await page
       .getByRole("navigation", { name: "Mobile navigation" })

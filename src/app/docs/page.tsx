@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { docPages } from "@/lib/site";
 export const metadata = {
   title: "Documentation",
@@ -16,13 +17,20 @@ export default function DocsIndex() {
       <p>
         Start with the embedded engine, explore SQL, and learn how to deploy.
       </p>
-      <div className="docs-toc" style={{ marginTop: 35 }}>
+      <nav className="resource-grid" aria-label="Documentation guides">
         {docPages.map((p) => (
-          <Link href={`/docs/${p.slug}/`} key={p.slug}>
-            {p.title} →
+          <Link
+            className="resource-card"
+            href={`/docs/${p.slug}/`}
+            key={p.slug}
+          >
+            <span className="eyebrow">{p.group}</span>
+            <h2>{p.title}</h2>
+            <p>{p.description}</p>
+            <ArrowUpRight aria-hidden="true" size={18} />
           </Link>
         ))}
-      </div>
+      </nav>
     </main>
   );
 }

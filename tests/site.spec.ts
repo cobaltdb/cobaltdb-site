@@ -3,12 +3,13 @@ import AxeBuilder from "@axe-core/playwright";
 
 test("home renders without browser errors or failed local assets", async ({
   page,
+  baseURL,
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("response", (response) => {
     if (
-      response.url().startsWith("http://127.0.0.1:3000") &&
+      response.url().startsWith(baseURL ?? "http://127.0.0.1:3000") &&
       response.status() >= 400
     )
       errors.push(`${response.status()} ${response.url()}`);

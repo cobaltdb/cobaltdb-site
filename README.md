@@ -24,6 +24,8 @@ npm run preview
 
 The production output is `out/`. The preview serves that exact output at http://localhost:3000, including real 404 responses. Browser tests run desktop, mobile and native 3840×2160 4K profiles and cover responsive layouts, navigation, search and empty states, copy success/failure, code and query tabs, downloads, keyboard interaction, reduced motion, asset/link integrity, and axe accessibility checks. Layout checks span 320–3840px.
 
+If port 3000 is occupied, set `PORT` for both the preview and Playwright (PowerShell: `$env:PORT='3037'`). Check that the preview is serving CobaltDB before reusing a running server.
+
 The build includes a small Windows export normalization for [Next.js #85374](https://github.com/vercel/next.js/issues/85374). It copies nested RSC segment output to the flat filenames requested by the browser, preserving originals. On Linux this step is a no-op. The browser asset check guards this behavior.
 
 ## Content and brand
@@ -44,6 +46,8 @@ All pages share a fluid `.container` / `.header-inner` shell, capped at **1728px
 At wider breakpoints, feature cards stack beside the architecture panel, query editing/results can share a row, documentation guides form an adaptive card grid, and studio projects use two columns. Documentation prose stays bounded while code blocks and tables use the article area. Browser checks cover all eight public page routes at the six viewport widths above, plus the native 4K composition and existing small-phone checks.
 
 The OXOGNET footer mark draws its four strokes once when it enters the viewport, using NineDeploy's signature timing (1.6 seconds per stroke, staggered through 2.5 seconds). Reduced motion and JavaScript-disabled visits show the complete static mark. The animation lives in `src/components/oxog-mark.tsx` and `src/app/themes.css`.
+
+The hero's full-width data fabric is a dependency-free Canvas 2D client component; the copy and database illustration remain server rendered. `HERO_SCENE` in `src/lib/hero-scene.ts` controls density, palettes, pointer falloff, speeds, idle behavior and effect budgets. Query routes and records react locally to the pointer. Empty-space clicks produce bounded isometric write pulses; controls, text selection, swipes and canceled touches do not. The scene fades behind the measured copy area and at its edges, uses fewer objects on phones, caps DPR at 1.75 and the backing store at six million pixels, slows when idle, and pauses offscreen or in hidden tabs. Reduced motion draws a static composition. Browser tests exercise burst expiry, paint budgets, touch filtering, live theme/motion changes, pause/resume and navigation cleanup.
 
 - `src/lib/site.ts`: links, version, snippets and search entries.
 - `src/lib/docs.tsx`: source-aligned local developer guides.

@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const baseURL = `http://127.0.0.1:${process.env.PORT || 3000}`;
+
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
@@ -8,7 +10,7 @@ export default defineConfig({
   workers: process.env.CI ? 2 : 4,
   reporter: "list",
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
@@ -34,7 +36,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "npm run preview",
-    url: "http://127.0.0.1:3000",
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
   },

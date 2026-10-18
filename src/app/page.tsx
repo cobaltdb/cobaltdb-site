@@ -16,6 +16,7 @@ import {
   Zap,
 } from "lucide-react";
 import { DatabaseArt } from "@/components/database-art";
+import { HeroBackground } from "@/components/hero-background";
 import {
   InstallCommand,
   QueryExplorer,
@@ -73,61 +74,67 @@ const faqs = [
 export default function Home() {
   return (
     <main id="main">
-      <section className="hero container">
-        <div className="hero-copy">
-          <a className="release-badge" href={`${REPO}/blob/main/CHANGELOG.md`}>
-            <span className="badge-dot" />
-            <strong>v{VERSION}</strong>
-            <span>Small engine. New possibilities.</span>
-            <ArrowRight size={13} />
-          </a>
-          <h1>
-            Small footprint.
-            <br />
-            <span>Serious database.</span>
-          </h1>
-          <p className="hero-description">
-            All the database you need.
-            <br />
-            Right where your application lives.
-          </p>
-          <p className="hero-detail">
-            A modern SQL database written in Go. Embed it in your app or run it
-            as a server. Your data, your architecture.
-          </p>
-          <div className="hero-buttons">
-            <Link className="button primary" href="/docs/getting-started/">
-              Start building
-              <ArrowRight size={17} />
-            </Link>
+      <section className="hero-stage" aria-label="Introducing CobaltDB">
+        <HeroBackground />
+        <div className="hero container">
+          <div className="hero-copy">
             <a
-              className="button secondary"
-              href={REPO}
-              target="_blank"
-              rel="noreferrer"
+              className="release-badge"
+              href={`${REPO}/blob/main/CHANGELOG.md`}
             >
-              <Github size={18} />
-              Explore the source
-              <ArrowUpRight size={14} />
+              <span className="badge-dot" />
+              <strong>v{VERSION}</strong>
+              <span>Small engine. New possibilities.</span>
+              <ArrowRight size={13} />
             </a>
+            <h1>
+              Small footprint.
+              <br />
+              <span>Serious database.</span>
+            </h1>
+            <p className="hero-description">
+              All the database you need.
+              <br />
+              Right where your application lives.
+            </p>
+            <p className="hero-detail">
+              A modern SQL database written in Go. Embed it in your app or run
+              it as a server. Your data, your architecture.
+            </p>
+            <div className="hero-buttons">
+              <Link className="button primary" href="/docs/getting-started/">
+                Start building
+                <ArrowRight size={17} />
+              </Link>
+              <a
+                className="button secondary"
+                href={REPO}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Github size={18} />
+                Explore the source
+                <ArrowUpRight size={14} />
+              </a>
+            </div>
+            <InstallCommand />
+            <div className="hero-proof">
+              <span>
+                <Check size={13} />
+                Open source · MIT
+              </span>
+              <span>
+                <Check size={13} />
+                Zero CGO
+              </span>
+              <span>
+                <Check size={13} />
+                Yours to build on
+              </span>
+            </div>
           </div>
-          <InstallCommand />
-          <div className="hero-proof">
-            <span>
-              <Check size={13} />
-              Open source · MIT
-            </span>
-            <span>
-              <Check size={13} />
-              Zero CGO
-            </span>
-            <span>
-              <Check size={13} />
-              Yours to build on
-            </span>
-          </div>
+          <DatabaseArt />
         </div>
-        <DatabaseArt />
       </section>
       <div className="capability-strip">
         <div className="container">

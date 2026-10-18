@@ -1,6 +1,8 @@
+import { HeroArtworkMotion } from "./hero-artwork-motion";
+
 export function DatabaseArt() {
   return (
-    <div className="database-art">
+    <HeroArtworkMotion>
       <svg
         viewBox="0 0 620 530"
         fill="none"
@@ -310,6 +312,6 @@ export function DatabaseArt() {
         <span>FIG. 01</span> A complete database. Inside your app.
         <span>GO →</span>
       </div>
-    </div>
+    </HeroArtworkMotion>
   );
 }

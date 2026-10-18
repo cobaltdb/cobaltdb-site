@@ -114,10 +114,47 @@ const readingSelector =
 const controlSelector =
   "a,button,input,textarea,select,label,summary,pre,code,dialog,[role='button'],[role='link'],[role='dialog'],[role='menu'],[contenteditable]:not([contenteditable='false'])";
 
+/** Restore a quiet static composition without leaving transient light or wave nodes behind. */
+export function freezeBackgroundScene(
+  svg: SVGSVGElement,
+  overlay: SVGSVGElement,
+  state: "disabled" | "reduced" | "static" = "disabled",
+) {
+  svg.dataset.motion = overlay.dataset.motion = state;
+  svg.dataset.activity = "idle";
+  overlay.querySelectorAll(".fabric-pulse").forEach((pulse) => {
+    pulse.removeAttribute("data-active");
+    pulse.removeAttribute("data-variant");
+  });
+  overlay
+    .querySelectorAll(".fabric-pointer,.fabric-trail,.fabric-response")
+    .forEach((element) => {
+      element.setAttribute("opacity", "0");
+    });
+  const field = svg.querySelector(".fabric-field");
+  field?.setAttribute("opacity", String(BACKGROUND_SCENE.idle.opacity));
+  const { width, height } = svg.getBoundingClientRect();
+  const viewBox = `0 0 ${width || 1600} ${height || 1000}`;
+  svg.setAttribute("viewBox", viewBox);
+  overlay.setAttribute("viewBox", viewBox);
+  svg.querySelectorAll(".fabric-object").forEach((element, index) => {
+    const seed = objectSeed(index);
+    element.setAttribute(
+      "transform",
+      `translate(${seed.x * (width || 1600)} ${seed.y * (height || 1000)})`,
+    );
+    element.setAttribute("opacity", "0.55");
+  });
+  svg.querySelectorAll(".fabric-route,.fabric-packet").forEach((element) => {
+    element.setAttribute("opacity", "0");
+  });
+}
+
 export function mountBackgroundScene(
   svg: SVGSVGElement,
   overlay: SVGSVGElement,
   prefix: string,
+  overrideReduced = false,
 ) {
   const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
   const field = svg.querySelector<SVGGElement>(".fabric-field");
@@ -181,7 +218,7 @@ export function mountBackgroundScene(
   let width = 1600;
   let height = 1000;
   let compact = false;
-  let reduced = motionQuery.matches;
+  let reduced = motionQuery.matches && !overrideReduced;
   let visible = false;
   let disposed = false;
   let raf = 0;
@@ -206,9 +243,6 @@ export function mountBackgroundScene(
     active: false,
     movedAt: -Infinity,
   };
-  let hero: HTMLElement | null = null;
-  let heroArt: SVGSVGElement | null = null;
-  let heroVisible = false;
 
   function resetDynamics() {
     for (const node of nodes) {
@@ -224,36 +258,10 @@ export function mountBackgroundScene(
     }
   }
 
-  function syncHero() {
-    if (!hero) return;
-    const playing = heroVisible && visible && !document.hidden && !reduced;
-    attr(
-      hero,
-      "data-scene-motion",
-      reduced ? "reduced" : playing ? "running" : "paused",
-    );
-    if (playing) heroArt?.unpauseAnimations();
-    else heroArt?.pauseAnimations();
-  }
-  const heroObserver = new IntersectionObserver(([entry]) => {
-    heroVisible = entry.isIntersecting;
-    syncHero();
-  });
-
   function refreshTargets() {
     readingElements = [...document.querySelectorAll(readingSelector)].filter(
       (element) => !element.parentElement?.closest(readingSelector),
     );
-    const next = document.querySelector<HTMLElement>(".hero-stage");
-    if (next !== hero) {
-      if (hero) heroObserver.unobserve(hero);
-      hero = next;
-      heroArt =
-        hero?.querySelector<SVGSVGElement>(".database-art > svg") ?? null;
-      heroVisible = false;
-      if (hero) heroObserver.observe(hero);
-      syncHero();
-    }
     targetsDirty = false;
     readingDirty = true;
   }
@@ -802,7 +810,6 @@ export function mountBackgroundScene(
         pulse.element.removeAttribute("data-active");
       }
     }
-    syncHero();
     requestRender();
   }
   function invalidate() {
@@ -944,8 +951,11 @@ export function mountBackgroundScene(
     render(0, false);
   }
   function motionChanged() {
-    reduced = motionQuery.matches;
-    syncPlayback();
+    const next = motionQuery.matches && !overrideReduced;
+    if (next !== reduced) {
+      reduced = next;
+      syncPlayback();
+    }
   }
   const observer = new IntersectionObserver(([entry]) => {
     visible = entry.isIntersecting;
@@ -987,7 +997,6 @@ export function mountBackgroundScene(
     disposed = true;
     cancelAnimationFrame(raf);
     observer.disconnect();
-    heroObserver.disconnect();
     resizeObserver.disconnect();
     mutations.disconnect();
     document.removeEventListener("pointermove", move);
@@ -1000,7 +1009,6 @@ export function mountBackgroundScene(
     window.removeEventListener("resize", resize);
     document.removeEventListener("visibilitychange", syncPlayback);
     motionQuery.removeEventListener("change", motionChanged);
-    hero?.removeAttribute("data-scene-motion");
-    heroArt?.unpauseAnimations();
+    freezeBackgroundScene(svg, overlay);
   };
 }

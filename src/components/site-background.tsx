@@ -4,19 +4,43 @@ import { useEffect, useId, useRef } from "react";
 import {
   arcPath,
   BACKGROUND_SCENE as config,
+  freezeBackgroundScene,
   mountBackgroundScene,
   objectSeed,
 } from "@/lib/background-scene";
+import {
+  backgroundPreference,
+  useBackgroundPreference,
+} from "@/lib/background-preference";
 
 /** Persistent ambient + interaction planes. React renders their bounded pools once. */
 export function SiteBackground() {
   const ref = useRef<SVGSVGElement>(null);
   const interactionRef = useRef<SVGSVGElement>(null);
   const prefix = `fabric-${useId().replaceAll(":", "")}`;
+  const preference = useBackgroundPreference();
   useEffect(() => {
-    if (ref.current && interactionRef.current)
-      return mountBackgroundScene(ref.current, interactionRef.current, prefix);
-  }, [prefix]);
+    const svg = ref.current;
+    const overlay = interactionRef.current;
+    if (!svg || !overlay) return;
+    // Read the real preference even on the hydration effect's server snapshot.
+    const current = backgroundPreference();
+    if (current !== preference) return;
+    if (current === "off" || current === "system-off") {
+      const freeze = () =>
+        freezeBackgroundScene(
+          svg,
+          overlay,
+          current === "off" ? "disabled" : "reduced",
+        );
+      freeze();
+      // Static resizing needs no animation clock or input listeners.
+      const observer = new ResizeObserver(freeze);
+      observer.observe(svg);
+      return () => observer.disconnect();
+    }
+    return mountBackgroundScene(svg, overlay, prefix, current === "on");
+  }, [prefix, preference]);
   return (
     <>
       <svg

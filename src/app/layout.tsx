@@ -62,6 +62,7 @@ export default function RootLayout({
     >
       <head>
         <script>{`try{var t=localStorage.getItem('cobaltdb-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch{}`}</script>
+        <script>{`try{var a=localStorage.getItem('cobaltdb-animations');document.documentElement.dataset.backgroundMotion=a==='on'||a==='off'?a:'system'}catch{}`}</script>
       </head>
       <body>
         <SiteBackground />

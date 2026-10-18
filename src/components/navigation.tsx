@@ -8,6 +8,7 @@ import { ArrowUpRight, BookOpen, Command, Menu, Search, X } from "lucide-react";
 import { Logo } from "./logo";
 import { REPO, searchItems } from "@/lib/site";
 import { ThemePicker } from "./theme-picker";
+import { AnimationToggle } from "./animation-toggle";
 
 export function Navigation() {
   const [menu, setMenu] = useState(false);
@@ -61,6 +62,7 @@ export function Navigation() {
           </nav>
           <div className="header-actions">
             <ThemePicker />
+            <AnimationToggle />
             <button
               type="button"
               className="search-trigger"

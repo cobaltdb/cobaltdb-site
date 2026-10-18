@@ -26,20 +26,21 @@ export function SiteBackground() {
     // Read the real preference even on the hydration effect's server snapshot.
     const current = backgroundPreference();
     if (current !== preference) return;
-    if (current === "off" || current === "system-off") {
-      const freeze = () =>
-        freezeBackgroundScene(
-          svg,
-          overlay,
-          current === "off" ? "disabled" : "reduced",
-        );
+    if (current === "system-off") {
+      const freeze = () => freezeBackgroundScene(svg, overlay, "reduced");
       freeze();
       // Static resizing needs no animation clock or input listeners.
       const observer = new ResizeObserver(freeze);
       observer.observe(svg);
       return () => observer.disconnect();
     }
-    return mountBackgroundScene(svg, overlay, prefix, current === "on");
+    return mountBackgroundScene(
+      svg,
+      overlay,
+      prefix,
+      current === "on",
+      current !== "off",
+    );
   }, [prefix, preference]);
   return (
     <>

@@ -155,6 +155,7 @@ export function mountBackgroundScene(
   overlay: SVGSVGElement,
   prefix: string,
   overrideReduced = false,
+  interactive = true,
 ) {
   const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
   const field = svg.querySelector<SVGGElement>(".fabric-field");
@@ -269,23 +270,27 @@ export function mountBackgroundScene(
     if (sizeDirty) {
       const box = svg.getBoundingClientRect();
       if (box.width && box.height) {
+        const resized = width !== box.width || height !== box.height;
         width = box.width;
         height = box.height;
         compact = width < BACKGROUND_SCENE.compactWidth;
         attr(svg, "viewBox", `0 0 ${width} ${height}`);
         attr(overlay, "viewBox", `0 0 ${width} ${height}`);
         for (const gradient of gradients) attr(gradient, "x2", width);
-        for (const pulse of pulses) {
-          pulse.age = Infinity;
-          pulse.element.removeAttribute("data-active");
+        // The observer's initial/same-size notification must not erase fresh input.
+        if (resized) {
+          for (const pulse of pulses) {
+            pulse.age = Infinity;
+            pulse.element.removeAttribute("data-active");
+          }
+          pointer.active = false;
+          pointer.strength = 0;
+          resetDynamics();
+          trails.forEach((trail) => {
+            trail.born = -Infinity;
+          });
+          press = undefined;
         }
-        pointer.active = false;
-        pointer.strength = 0;
-        resetDynamics();
-        trails.forEach((trail) => {
-          trail.born = -Infinity;
-        });
-        press = undefined;
       }
       sizeDirty = false;
       readingDirty = true;
@@ -795,7 +800,11 @@ export function mountBackgroundScene(
       "data-motion",
       reduced ? "reduced" : visible && !document.hidden ? "running" : "paused",
     );
-    attr(overlay, "data-motion", svg.getAttribute("data-motion") ?? "paused");
+    attr(
+      overlay,
+      "data-motion",
+      interactive ? (svg.getAttribute("data-motion") ?? "paused") : "disabled",
+    );
     pointer.active = false;
     pointer.strength = 0;
     resetDynamics();
@@ -841,6 +850,7 @@ export function mountBackgroundScene(
       press.moved = true;
     if (reduced || !visible || document.hidden || event.pointerType === "touch")
       return;
+    if (sizeDirty) measure();
     if (pointer.strength < 0.02) {
       pointer.x = event.clientX;
       pointer.y = event.clientY;
@@ -882,6 +892,7 @@ export function mountBackgroundScene(
       control(event.target)
     )
       return;
+    if (sizeDirty) measure();
     press = {
       x: event.clientX,
       y: event.clientY,
@@ -891,6 +902,7 @@ export function mountBackgroundScene(
     };
   }
   function up(event: PointerEvent) {
+    if (sizeDirty) measure();
     const start = press;
     press = undefined;
     if (
@@ -980,12 +992,14 @@ export function mountBackgroundScene(
     invalidate();
   });
   mutations.observe(document.body, { childList: true, subtree: true });
-  document.addEventListener("pointermove", move, { passive: true });
-  document.addEventListener("pointerdown", down, { passive: true });
-  document.addEventListener("pointerup", up, { passive: true });
-  document.addEventListener("pointercancel", leave, { passive: true });
-  document.documentElement.addEventListener("pointerleave", leave);
-  window.addEventListener("blur", leave);
+  if (interactive) {
+    document.addEventListener("pointermove", move, { passive: true });
+    document.addEventListener("pointerdown", down, { passive: true });
+    document.addEventListener("pointerup", up, { passive: true });
+    document.addEventListener("pointercancel", leave, { passive: true });
+    document.documentElement.addEventListener("pointerleave", leave);
+    window.addEventListener("blur", leave);
+  }
   window.addEventListener("scroll", scrolled, { passive: true });
   window.addEventListener("resize", resize, { passive: true });
   document.addEventListener("visibilitychange", syncPlayback);

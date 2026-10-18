@@ -6,7 +6,7 @@ export const BACKGROUND_PREFERENCE_KEY = "cobaltdb-animations";
 const changed = "cobaltdb:background-motion-change";
 const media = "(prefers-reduced-motion: reduce)";
 
-/** Explicit choices override the system default for the background alone. */
+/** Mouse effects follow the system default until the visitor saves a choice. */
 export function backgroundPreference() {
   const choice = document.documentElement.dataset.backgroundMotion;
   if (choice === "on" || choice === "off") return choice;

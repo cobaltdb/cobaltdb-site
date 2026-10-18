@@ -125,7 +125,7 @@ test("appearance panel supports preview, keyboard navigation and dismissal", asy
   await page.keyboard.press("Tab");
   await expect(panel).not.toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Animasyonları kapat", exact: true }),
+    page.getByRole("button", { name: "Disable mouse effects", exact: true }),
   ).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(

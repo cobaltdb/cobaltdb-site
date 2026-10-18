@@ -9,12 +9,11 @@ import {
 export function AnimationToggle() {
   const preference = useBackgroundPreference();
   const enabled = preference === "on" || preference === "system-on";
-  const label = enabled ? "Animasyonları kapat" : "Animasyonları aç";
+  const label = enabled ? "Disable mouse effects" : "Enable mouse effects";
   return (
     <button
       type="button"
       className="animation-toggle"
-      lang="tr"
       aria-label={label}
       aria-pressed={enabled}
       onClick={() => setBackgroundEnabled(!enabled)}

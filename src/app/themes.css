@@ -76,9 +76,6 @@
 :root[data-background-motion="off"] .site-interaction {
   visibility: hidden;
 }
-:root[data-background-motion="off"] .site-background {
-  animation: none;
-}
 .fabric-object,
 .fabric-response,
 .fabric-effects {

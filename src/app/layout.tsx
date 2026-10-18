@@ -39,7 +39,12 @@ export const metadata: Metadata = {
       },
     ],
   },
-  twitter: { card: "summary_large_image", images: ["/og.png"] },
+  twitter: {
+    card: "summary_large_image",
+    images: [
+      { url: "/og.png", alt: "CobaltDB — Small footprint. Serious database." },
+    ],
+  },
   icons: { icon: "/logo-mark.svg", apple: "/apple-touch-icon.png" },
 };
 

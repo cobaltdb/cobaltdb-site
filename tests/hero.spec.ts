@@ -114,7 +114,8 @@ test("pointer influence stays local, settles after exit and returns to a lower i
   expect(distance(settled.tiles[nearIndex], near)).toBeLessThan(
     distance(active.tiles[nearIndex], near),
   );
-  await page.clock.runFor(7000);
+  // Skip the quiet interval without rasterizing hundreds of redundant 4K frames.
+  await page.clock.fastForward(7000);
   const idle = await probe(page);
   await page.clock.runFor(1000);
   expect((await probe(page)).frames - idle.frames).toBeLessThanOrEqual(36);
@@ -286,6 +287,7 @@ test("scene stops offscreen and in hidden tabs, resumes and honors live reduced-
   expect((await probe(page)).frames).toBe(frames);
   expect((await probe(page)).rings).toBe(0);
   await page.emulateMedia({ reducedMotion: "no-preference" });
+  await expect(scene).toHaveAttribute("data-scene-motion", "running");
   await page.clock.runFor(200);
   expect((await probe(page)).frames).toBeGreaterThan(frames);
 });

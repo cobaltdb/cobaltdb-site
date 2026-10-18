@@ -74,7 +74,7 @@ export function mountHeroScene(canvas: HTMLCanvasElement, host: HTMLElement) {
   let raf = 0;
   let lastFrame = 0;
   let time = 0;
-  let lastInput = -HERO_SCENE.idle.after;
+  let lastInput = performance.now() - HERO_SCENE.idle.after * 1000;
   let lastTrail = 0;
   let energy = HERO_SCENE.idle.intensity as number;
   let palette = HERO_SCENE.palettes
@@ -407,7 +407,9 @@ export function mountHeroScene(canvas: HTMLCanvasElement, host: HTMLElement) {
   function frame(stamp: number) {
     raf = 0;
     if (disposed || !visible || document.hidden || reduced) return;
-    const idle = time - lastInput > HERO_SCENE.idle.after;
+    // Inactivity follows elapsed time, even when rendering is throttled or paused.
+    // Simulation time remains capped separately so the geometry never jumps.
+    const idle = stamp - lastInput > HERO_SCENE.idle.after * 1000;
     const fps = compact || idle ? HERO_SCENE.idle.fps : 60;
     if (!lastFrame || stamp - lastFrame >= 1000 / fps - 1) {
       const dt = lastFrame ? Math.min((stamp - lastFrame) / 1000, 0.05) : 0;
@@ -454,7 +456,7 @@ export function mountHeroScene(canvas: HTMLCanvasElement, host: HTMLElement) {
     return target instanceof Element && !!target.closest(controls);
   }
   function wake() {
-    lastInput = time;
+    lastInput = performance.now();
   }
   function move(event: PointerEvent) {
     const p = position(event);

@@ -29,6 +29,164 @@ async function pulseCount(page: Page) {
   return page.locator(".fabric-pulse[data-active]").count();
 }
 
+test("interaction effects paint above opaque content without section clipping or text masks", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await start(page);
+  const layers = await page.locator(".fabric-effects").evaluate((element) => {
+    const svg = element.closest("svg");
+    if (!svg) throw new Error("Effects have no viewport SVG");
+    return {
+      z: Number(getComputedStyle(svg).zIndex),
+      pointerEvents: getComputedStyle(svg).pointerEvents,
+      parent: svg.parentElement?.tagName,
+      mask: getComputedStyle(svg).maskImage,
+    };
+  });
+  expect(layers.pointerEvents).toBe("none");
+  expect(layers.parent).toBe("BODY");
+  expect(layers.z).toBeGreaterThan(0);
+  expect(layers.mask).toBe("none");
+  await page.locator(".hero-detail").click();
+  await page.clock.runFor(500);
+  expect(await pulseCount(page)).toBe(1);
+  const arcOpacity = await page
+    .locator(".fabric-pulse[data-active] .fabric-ring")
+    .first()
+    .locator("use")
+    .evaluateAll((elements) =>
+      elements.map((element) => Number(element.getAttribute("opacity"))),
+    );
+  expect(Math.min(...arcOpacity)).toBeGreaterThan(0.1);
+  expect(Math.max(...arcOpacity) - Math.min(...arcOpacity)).toBeLessThan(0.02);
+});
+
+test("pointer light tracks text, code and controls in viewport coordinates through scrolling", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await start(page);
+  const light = page.locator(".fabric-pointer");
+  await expect(light).toHaveCount(1);
+  for (const selector of [
+    ".hero-detail",
+    ".install-command",
+    ".button.primary",
+  ]) {
+    const target = page.locator(selector).first();
+    await target.scrollIntoViewIfNeeded();
+    const box = await target.boundingBox();
+    if (!box) throw new Error(`Missing ${selector}`);
+    const x = box.x + box.width / 2,
+      y = box.y + box.height / 2;
+    await page.mouse.move(x, y);
+    await page.clock.runFor(400);
+    const position = await light.evaluate((element) => {
+      const matrix = (element as SVGGraphicsElement).getCTM();
+      if (!matrix) throw new Error("Pointer transform is missing");
+      return {
+        x: matrix.e,
+        y: matrix.f,
+        opacity: Number(element.getAttribute("opacity")),
+      };
+    });
+    expect(position.x).toBeCloseTo(x, 0);
+    expect(position.y).toBeCloseTo(y, 0);
+    expect(position.opacity).toBeGreaterThan(0.5);
+    const before = position;
+    await page.mouse.wheel(0, 160);
+    await page.clock.runFor(400);
+    const after = await light.evaluate((element) => {
+      const matrix = (element as SVGGraphicsElement).getCTM();
+      if (!matrix) throw new Error("Pointer transform is missing");
+      return {
+        x: matrix.e,
+        y: matrix.f,
+        opacity: Number(element.getAttribute("opacity")),
+      };
+    });
+    expect(after.x).toBeCloseTo(before.x, 0);
+    expect(after.y).toBeCloseTo(before.y, 0);
+    expect(after.opacity).toBeGreaterThan(0.5);
+  }
+});
+
+test("waves cross section and opaque card edges and retain their viewport origin after scroll", async ({
+  page,
+}) => {
+  await start(page);
+  for (const selector of ["#quickstart", "#quickstart .code-toolbar"]) {
+    const point = await page.locator(selector).evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      const y = innerHeight / 2;
+      scrollTo({ top: scrollY + box.top - y, behavior: "instant" });
+      return {
+        x: box.left + box.width / 2,
+        y: y + (element.id ? 0 : box.height / 2),
+      };
+    });
+    await page.clock.runFor(100);
+    await page.mouse.click(point.x, point.y);
+    await page.clock.runFor(400);
+    const pulse = page.locator(".fabric-pulse[data-active]");
+    await expect(pulse).toHaveCount(1);
+    const position = await pulse.evaluate((element) => {
+      const matrix = (element as SVGGraphicsElement).getCTM();
+      if (!matrix) throw new Error("Pulse transform missing");
+      return { x: matrix.e, y: matrix.f };
+    });
+    expect(position.x).toBeCloseTo(point.x, 0);
+    expect(position.y).toBeCloseTo(point.y, 0);
+    const arcs = await pulse
+      .locator(".fabric-ring")
+      .first()
+      .locator("use")
+      .evaluateAll((elements) =>
+        elements.map((element) => Number(element.getAttribute("opacity"))),
+      );
+    expect(Math.min(...arcs)).toBeGreaterThan(0.1);
+    expect(Math.max(...arcs) - Math.min(...arcs)).toBeLessThan(0.02);
+    await page.mouse.wheel(0, 180);
+    await page.clock.runFor(100);
+    await expect(pulse).toHaveAttribute(
+      "transform",
+      `translate(${point.x} ${point.y})`,
+    );
+    await page.clock.fastForward(3000);
+    expect(await pulseCount(page)).toBe(0);
+  }
+  const light = page.locator(".fabric-pointer");
+  const count = await page.locator(".site-interaction *").count();
+  for (let i = 0; i < 40; i++) {
+    await page.mouse.move(120 + i * 3, 200 + i * 2);
+    await page.clock.runFor(10);
+  }
+  expect(await page.locator(".site-interaction *").count()).toBe(count);
+  expect(await page.locator(".fabric-trail").count()).toBeLessThanOrEqual(16);
+  expect(
+    await page
+      .locator(".fabric-trail")
+      .evaluateAll((elements) =>
+        elements.some(
+          (element) => Number(element.getAttribute("opacity")) > 0.05,
+        ),
+      ),
+  ).toBe(true);
+  await page.locator("html").dispatchEvent("pointerleave");
+  await page.clock.runFor(1600);
+  expect(Number(await light.getAttribute("opacity"))).toBeLessThan(0.01);
+  expect(
+    await page
+      .locator(".fabric-trail")
+      .evaluateAll((elements) =>
+        elements.every(
+          (element) => Number(element.getAttribute("opacity")) === 0,
+        ),
+      ),
+  ).toBe(true);
+});
+
 test("one persistent SVG covers the page, footer and client-side document navigation", async ({
   page,
 }) => {
@@ -193,7 +351,8 @@ test("click waves and sparks have a fixed budget and expire without blocking rea
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await start(page);
   const background = page.locator(".site-background");
-  const count = await background.locator("*").count();
+  const scene = page.locator(".site-background,.site-interaction");
+  const count = await scene.locator("*").count();
   const point = await page.evaluate(() => ({ x: innerWidth - 40, y: 120 }));
   for (let i = 0; i < 24; i++) {
     await page.mouse.click(point.x - (i % 3) * 5, point.y + (i % 4) * 10);
@@ -201,8 +360,8 @@ test("click waves and sparks have a fixed budget and expire without blocking rea
   }
   expect(await pulseCount(page)).toBeGreaterThan(0);
   expect(await pulseCount(page)).toBeLessThanOrEqual(6);
-  expect(await background.locator("*").count()).toBe(count);
-  const sparks = await background
+  expect(await scene.locator("*").count()).toBe(count);
+  const sparks = await scene
     .locator(".fabric-pulse[data-active] .fabric-spark")
     .evaluateAll(
       (elements) =>

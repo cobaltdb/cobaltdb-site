@@ -1,15 +1,24 @@
-/** CSS pixels / seconds. Geometry and interactions share one bounded SVG scene. */
+/** CSS pixels / seconds. Two SVG planes share one bounded scene and RAF clock. */
 export const BACKGROUND_SCENE = {
   compactWidth: 768,
   objects: { full: 32, compact: 14 },
   routes: { full: 12, compact: 6, samples: 16, stops: 24 },
-  pointer: { radius: 185, push: 25, settle: 5, follow: 12 },
+  pointer: {
+    radius: 300,
+    push: 76,
+    settle: 7,
+    follow: 18,
+    lightRadius: 180,
+    lifetime: 3,
+  },
+  trail: { max: 14, lifetime: 0.7 },
   pulse: {
     max: 6,
     compactMax: 3,
     lifetime: 2.4,
-    radius: 220,
-    compactRadius: 145,
+    radius: 350,
+    compactRadius: 190,
+    push: 72,
     segments: 12,
     mergeDistance: 46,
     mergeInterval: 0.14,
@@ -18,12 +27,12 @@ export const BACKGROUND_SCENE = {
     count: 10,
     compactCount: 6,
     lifetime: 1.65,
-    radius: 82,
+    radius: 145,
     attack: 0.1,
   },
   idle: { after: 6, opacity: 0.55, fps: 30 },
   motion: { speed: 0.11, drift: 9, parallax: 0.07, packetSpeed: 22 },
-  reading: { feather: 42, opacity: 0.035 },
+  reading: { feather: 96, opacity: 0.18 },
   tap: { distance: 9, duration: 600 },
 } as const;
 
@@ -86,11 +95,25 @@ const readingSelector =
 const controlSelector =
   "a,button,input,textarea,select,label,summary,pre,code,dialog,[role='button'],[role='link'],[role='dialog'],[role='menu'],[contenteditable]:not([contenteditable='false'])";
 
-export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
+export function mountBackgroundScene(
+  svg: SVGSVGElement,
+  overlay: SVGSVGElement,
+  prefix: string,
+) {
   const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
   const field = svg.querySelector<SVGGElement>(".fabric-field");
   if (!field) return;
   const objects = [...svg.querySelectorAll<SVGGElement>(".fabric-object")];
+  const responses = [
+    ...overlay.querySelectorAll<SVGGElement>(".fabric-response"),
+  ];
+  const lightNode = overlay.querySelector<SVGGElement>(".fabric-pointer");
+  if (!lightNode) return;
+  const light: SVGGElement = lightNode;
+  const trails = [
+    ...overlay.querySelectorAll<SVGPathElement>(".fabric-trail"),
+  ].map((element) => ({ element, born: -Infinity }));
+  let trailIndex = 0;
   const routes = [...svg.querySelectorAll<SVGPathElement>(".fabric-route")];
   const packets = [...svg.querySelectorAll<SVGRectElement>(".fabric-packet")];
   const gradients = [
@@ -100,7 +123,7 @@ export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
     ...gradient.querySelectorAll("stop"),
   ]);
   const pulses: Pulse[] = [
-    ...svg.querySelectorAll<SVGGElement>(".fabric-pulse"),
+    ...overlay.querySelectorAll<SVGGElement>(".fabric-pulse"),
   ].map((element) => ({
     x: 0,
     y: 0,
@@ -187,6 +210,7 @@ export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
         height = box.height;
         compact = width < BACKGROUND_SCENE.compactWidth;
         attr(svg, "viewBox", `0 0 ${width} ${height}`);
+        attr(overlay, "viewBox", `0 0 ${width} ${height}`);
         for (const gradient of gradients) attr(gradient, "x2", width);
         for (const pulse of pulses) {
           pulse.age = Infinity;
@@ -194,6 +218,9 @@ export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
         }
         pointer.active = false;
         pointer.strength = 0;
+        trails.forEach((trail) => {
+          trail.born = -Infinity;
+        });
         press = undefined;
       }
       sizeDirty = false;
@@ -228,18 +255,18 @@ export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
   function clarity(x: number, y: number) {
     let alpha = 1;
     for (const box of reading) {
-      const dx = Math.max(box.left - x, 0, x - box.right);
-      const dy = Math.max(box.top - y, 0, y - box.bottom);
-      if (
-        dx > BACKGROUND_SCENE.reading.feather ||
-        dy > BACKGROUND_SCENE.reading.feather
-      )
-        continue;
+      // Elliptical falloff avoids outlining a reading region as a rectangle.
+      // This applies only to ambient detail, never to interactive light/waves.
+      const dx =
+        (x - (box.left + box.right) / 2) /
+        ((box.right - box.left) / 2 + BACKGROUND_SCENE.reading.feather);
+      const dy =
+        (y - (box.top + box.bottom) / 2) /
+        ((box.bottom - box.top) / 2 + BACKGROUND_SCENE.reading.feather);
       alpha = Math.min(
         alpha,
         BACKGROUND_SCENE.reading.opacity +
-          (1 - BACKGROUND_SCENE.reading.opacity) *
-            smooth(Math.hypot(dx, dy) / BACKGROUND_SCENE.reading.feather),
+          (1 - BACKGROUND_SCENE.reading.opacity) * smooth(Math.hypot(dx, dy)),
       );
       if (alpha <= BACKGROUND_SCENE.reading.opacity) break;
     }
@@ -257,29 +284,61 @@ export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
     const dx = x - pointer.x,
       dy = y - pointer.y;
     const distance = Math.hypot(dx, dy);
+    const proximity = smooth(1 - distance / BACKGROUND_SCENE.pointer.radius);
+    // The outer field draws detail inward; its core repels with a soft curl.
     const force =
-      smooth(1 - distance / BACKGROUND_SCENE.pointer.radius) *
+      proximity *
+      (proximity * 1.7 - 0.7) *
       pointer.strength *
       BACKGROUND_SCENE.pointer.push *
       depth;
     let px = x + (dx / Math.max(1, distance)) * force;
     let py = y + (dy / Math.max(1, distance)) * force;
+    const curl =
+      Math.sin(time * 2 + distance * 0.015) *
+      proximity *
+      pointer.strength *
+      12 *
+      depth;
+    px -= (dy / Math.max(1, distance)) * curl;
+    py += (dx / Math.max(1, distance)) * curl;
     for (const pulse of pulses) {
       if (pulse.age >= BACKGROUND_SCENE.pulse.lifetime) continue;
       const dx = x - pulse.x,
         dy = y - pulse.y;
       const progress = pulse.age / BACKGROUND_SCENE.pulse.lifetime;
-      const distance = Math.hypot(dx, dy / 0.56);
+      const distance = Math.hypot(dx, dy / 0.7);
       const force =
-        Math.exp(-(((distance - radius(progress)) / 35) ** 2)) *
+        Math.exp(-(((distance - radius(progress)) / 65) ** 2)) *
         (1 - progress) *
-        16 *
+        BACKGROUND_SCENE.pulse.push *
+        pulse.strength *
         depth;
       const actual = Math.max(1, Math.hypot(dx, dy));
       px += (dx / actual) * force;
       py += (dy / actual) * force;
     }
     return { x: px, y: py };
+  }
+  function influence(x: number, y: number) {
+    let strength =
+      smooth(
+        1 -
+          Math.hypot(x - pointer.x, y - pointer.y) /
+            BACKGROUND_SCENE.pointer.radius,
+      ) * pointer.strength;
+    for (const pulse of pulses) {
+      if (pulse.age >= BACKGROUND_SCENE.pulse.lifetime) continue;
+      const progress = pulse.age / BACKGROUND_SCENE.pulse.lifetime;
+      const distance = Math.hypot(x - pulse.x, (y - pulse.y) / 0.7);
+      strength = Math.max(
+        strength,
+        Math.exp(-(((distance - radius(progress)) / 90) ** 2)) *
+          (1 - progress) *
+          pulse.strength,
+      );
+    }
+    return strength * edge(x, y);
   }
   function routePoint(index: number, fraction: number, displaced = true) {
     const count = compact
@@ -308,11 +367,38 @@ export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
         pulse.element.removeAttribute("data-active");
     }
     const response = 1 - Math.exp(-BACKGROUND_SCENE.pointer.settle * dt);
-    pointer.strength +=
-      ((pointer.active && !reduced ? 1 : 0) - pointer.strength) * response;
+    const wake =
+      pointer.active && !reduced
+        ? smooth(
+            (BACKGROUND_SCENE.pointer.lifetime - (now - lastInput) / 1000) /
+              1.5,
+          )
+        : 0;
+    pointer.strength += (wake - pointer.strength) * response;
     const follow = 1 - Math.exp(-BACKGROUND_SCENE.pointer.follow * dt);
     pointer.x += (pointer.targetX - pointer.x) * follow;
     pointer.y += (pointer.targetY - pointer.y) * follow;
+    // All input and effect positions are viewport CSS pixels. Scrolling moves
+    // only ambient parallax, never the light, trail or click origin.
+    attr(
+      light,
+      "transform",
+      `translate(${pointer.targetX} ${pointer.targetY})`,
+    );
+    attr(light, "opacity", reduced ? 0 : pointer.strength.toFixed(3));
+    for (const trail of trails) {
+      const age = (now - trail.born) / 1000;
+      attr(
+        trail.element,
+        "opacity",
+        reduced
+          ? 0
+          : (
+              Math.max(0, 1 - age / BACKGROUND_SCENE.trail.lifetime) ** 2 *
+              0.55
+            ).toFixed(3),
+      );
+    }
     attr(field as SVGGElement, "opacity", reduced ? 0.48 : energy.toFixed(3));
     const objectCount = compact
       ? BACKGROUND_SCENE.objects.compact
@@ -339,12 +425,12 @@ export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
       );
       const alpha = clarity(point.x, point.y) * (0.42 + seed.depth * 0.42);
       attr(element, "opacity", alpha.toFixed(3));
+      const reactive = reduced ? 0 : influence(point.x, point.y) * 0.65;
+      attr(responses[index], "opacity", reactive.toFixed(3));
       if (alpha < 0.005) return; // No transform work for objects outside the viewport.
-      attr(
-        element,
-        "transform",
-        `translate(${point.x.toFixed(2)} ${point.y.toFixed(2)}) rotate(${(Math.sin(time * 0.07 + seed.phase) * 7).toFixed(2)})`,
-      );
+      const transform = `translate(${point.x.toFixed(2)} ${point.y.toFixed(2)}) rotate(${(Math.sin(time * 0.07 + seed.phase) * 7).toFixed(2)})`;
+      attr(element, "transform", transform);
+      if (reactive > 0.005) attr(responses[index], "transform", transform);
     });
     const routeCount = compact
       ? BACKGROUND_SCENE.routes.compact
@@ -404,13 +490,13 @@ export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
         Math.sin(Math.PI * smooth(progress)) *
         (1 - progress) *
         pulse.strength *
-        0.78;
+        0.95;
       pulse.rings.forEach((ring, index) => {
         const r = wave * (index ? 0.67 : 1);
         attr(
           ring,
           "transform",
-          `scale(${r.toFixed(2)} ${(r * 0.56).toFixed(2)})`,
+          `scale(${r.toFixed(2)} ${(r * 0.7).toFixed(2)})`,
         );
         pulse.arcs[index].forEach((arc, segment) => {
           const angle = ((segment + 0.5) * Math.PI) / 6;
@@ -420,9 +506,9 @@ export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
             (
               alpha *
               (index ? 0.4 : 1) *
-              clarity(
+              edge(
                 pulse.x + Math.cos(angle) * r,
-                pulse.y + Math.sin(angle) * r * 0.56,
+                pulse.y + Math.sin(angle) * r * 0.7,
               )
             ).toFixed(3),
           );
@@ -442,7 +528,7 @@ export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
         const travel =
           (1 - Math.exp(-pulse.age * 2.5)) * BACKGROUND_SCENE.sparks.radius;
         const x = Math.cos(angle) * travel,
-          y = Math.sin(angle) * travel * 0.56;
+          y = Math.sin(angle) * travel * 0.7;
         attr(spark, "transform", `translate(${x.toFixed(2)} ${y.toFixed(2)})`);
         attr(
           spark,
@@ -450,7 +536,7 @@ export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
           (
             (1 - progress) ** 2 *
             smooth(pulse.age / BACKGROUND_SCENE.sparks.attack) *
-            clarity(pulse.x + x, pulse.y + y) *
+            edge(pulse.x + x, pulse.y + y) *
             0.85
           ).toFixed(3),
         );
@@ -498,10 +584,15 @@ export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
       "data-motion",
       reduced ? "reduced" : visible && !document.hidden ? "running" : "paused",
     );
+    attr(overlay, "data-motion", svg.getAttribute("data-motion") ?? "paused");
     pointer.active = false;
+    pointer.strength = 0;
+    attr(light, "opacity", 0);
     press = undefined;
     if (reduced) {
-      pointer.strength = 0;
+      trails.forEach((trail) => {
+        trail.born = -Infinity;
+      });
       for (const pulse of pulses) {
         pulse.age = Infinity;
         pulse.element.removeAttribute("data-active");
@@ -519,7 +610,6 @@ export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
     invalidate();
   }
   function scrolled() {
-    pointer.active = false;
     press = undefined;
     lastInput = performance.now();
     invalidate();
@@ -544,9 +634,24 @@ export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
       pointer.x = event.clientX;
       pointer.y = event.clientY;
     }
+    if (
+      pointer.active &&
+      Math.hypot(
+        event.clientX - pointer.targetX,
+        event.clientY - pointer.targetY,
+      ) > 2
+    ) {
+      const trail = trails[trailIndex++ % trails.length];
+      trail.born = performance.now();
+      attr(
+        trail.element,
+        "d",
+        `M${pointer.targetX} ${pointer.targetY} Q${pointer.x} ${pointer.y} ${event.clientX} ${event.clientY}`,
+      );
+    }
     pointer.targetX = event.clientX;
     pointer.targetY = event.clientY;
-    pointer.active = !control(event.target);
+    pointer.active = true;
     lastInput = performance.now();
   }
   function down(event: PointerEvent) {
@@ -639,7 +744,13 @@ export function mountBackgroundScene(svg: SVGSVGElement, prefix: string) {
   resizeObserver.observe(svg);
   resizeObserver.observe(document.body);
   const mutations = new MutationObserver((records) => {
-    if (records.every((record) => svg.contains(record.target))) return;
+    if (
+      records.every(
+        (record) =>
+          svg.contains(record.target) || overlay.contains(record.target),
+      )
+    )
+      return;
     targetsDirty = true;
     invalidate();
   });

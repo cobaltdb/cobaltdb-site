@@ -48,7 +48,8 @@
   color-scheme: dark;
 }
 
-.site-background {
+.site-background,
+.site-interaction {
   display: block;
   position: fixed;
   inset: 0;
@@ -57,14 +58,28 @@
   overflow: hidden;
   pointer-events: none;
   user-select: none;
-  z-index: -1;
   animation: fabric-appear 1.5s ease-out both;
 }
+.site-background {
+  z-index: -1;
+}
+/* Siblings of page sections: their overflow, isolation and opaque surfaces
+   cannot cut the interaction plane. Navigation (50) and dialogs stay above it. */
+.site-interaction {
+  z-index: 20;
+  opacity: 0.78;
+  animation: none;
+}
+.site-interaction[data-motion="paused"] {
+  visibility: hidden;
+}
 .fabric-object,
+.fabric-response,
 .fabric-effects {
   color: var(--fabric-node);
 }
 .fabric-object:nth-child(3n),
+.fabric-response:nth-child(3n),
 .fabric-pulse[data-variant="2"] {
   color: var(--fabric-accent);
 }
@@ -85,7 +100,13 @@
   }
 }
 @media (max-width: 767px) {
-  .site-background [data-wide] {
+  .site-background [data-wide],
+  .site-interaction [data-wide] {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-interaction {
     display: none;
   }
 }

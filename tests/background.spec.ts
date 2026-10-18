@@ -263,7 +263,13 @@ test("waves cross section and opaque card edges and retain their viewport origin
       );
     expect(Math.min(...arcs)).toBeGreaterThan(0.1);
     expect(Math.max(...arcs) - Math.min(...arcs)).toBeLessThan(0.02);
+    const scrollBeforeWheel = await page.evaluate(() => scrollY);
     await page.mouse.wheel(0, 180);
+    // Wheel input is delivered by the compositor, outside the installed clock.
+    // Drain it before positioning the next click; virtual time alone cannot.
+    await expect
+      .poll(() => page.evaluate(() => scrollY))
+      .toBeGreaterThan(scrollBeforeWheel + 150);
     await page.clock.runFor(100);
     await expect(pulse).toHaveAttribute(
       "transform",

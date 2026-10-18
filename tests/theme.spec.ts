@@ -125,6 +125,10 @@ test("appearance panel supports preview, keyboard navigation and dismissal", asy
   await page.keyboard.press("Tab");
   await expect(panel).not.toBeVisible();
   await expect(
+    page.getByRole("button", { name: "Animasyonları kapat", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(
     page.getByRole("button", { name: "Search documentation", exact: true }),
   ).toBeFocused();
   await trigger.click();

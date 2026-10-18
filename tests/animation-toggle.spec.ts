@@ -140,7 +140,8 @@ test("turns effects off, clears them, releases listeners and restarts without le
     );
   }
   await toggle(page).press("Enter");
-  await clickFrozenScene(page, ".hero-detail");
+  await expect(scene(page)).toHaveAttribute("data-motion", "running");
+  await clickFrozenScene(page, "h1");
   await page.clock.runFor(100);
   await expect(page.locator(".fabric-pulse[data-active]")).not.toHaveCount(0);
 });
@@ -188,7 +189,12 @@ test("uses reduced motion on first visit and respects an explicit background-onl
   await toggle(page).click();
   await expect(scene(page)).toHaveAttribute("data-motion", "running");
   const enabled = await page.evaluate(() => window.backgroundListenerCount());
-  for (const type of ["pointermove", "pointerdown", "pointerup", "pointercancel"])
+  for (const type of [
+    "pointermove",
+    "pointerdown",
+    "pointerup",
+    "pointercancel",
+  ])
     expect(enabled[type] - disabled[type], type).toBe(1);
   await expect(page.locator(".site-interaction")).toBeVisible();
   await expect(page.locator(".hero-stage")).toHaveAttribute(

@@ -185,9 +185,11 @@ test("uses reduced motion on first visit and respects an explicit background-onl
   await expect(scene(page)).toHaveAttribute("data-motion", "reduced");
   await expect(toggle(page)).toHaveAccessibleName("Animasyonları aç");
   const disabled = await page.evaluate(() => window.backgroundListenerCount());
-  expect(disabled.pointermove).toBe(0);
   await toggle(page).click();
   await expect(scene(page)).toHaveAttribute("data-motion", "running");
+  const enabled = await page.evaluate(() => window.backgroundListenerCount());
+  for (const type of ["pointermove", "pointerdown", "pointerup", "pointercancel"])
+    expect(enabled[type] - disabled[type], type).toBe(1);
   await expect(page.locator(".site-interaction")).toBeVisible();
   await expect(page.locator(".hero-stage")).toHaveAttribute(
     "data-scene-motion",

@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
+import { SiteBackground } from "@/components/site-background";
 import "./themes.css";
 
 const manrope = localFont({
@@ -63,6 +64,7 @@ export default function RootLayout({
         <script>{`try{var t=localStorage.getItem('cobaltdb-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch{}`}</script>
       </head>
       <body>
+        <SiteBackground />
         <a className="skip-link" href="#main">
           Skip to content
         </a>

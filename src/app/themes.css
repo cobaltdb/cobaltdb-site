@@ -29,12 +29,65 @@
   --art-chip-top: light-dark(#fff, #21385b);
   --art-chip-ink: light-dark(#2153b1, #b1cdff);
   --art-label: light-dark(#50627e, #a3badc);
+  --fabric-line: light-dark(#84a3d4, #4f77ad);
+  --fabric-node: light-dark(#4f7dcc, #86b6ff);
+  --fabric-accent: light-dark(#258b9d, #69c4d0);
+  --fabric-fill: light-dark(#e6efff, #172e50);
+  --backdrop-surface: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--surface-soft) 64%, transparent) 12%,
+    color-mix(in srgb, var(--surface-soft) 64%, transparent) 88%,
+    transparent
+  );
 }
 :root[data-theme="light"] {
   color-scheme: light;
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
+}
+
+.site-background {
+  display: block;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  z-index: -1;
+  animation: fabric-appear 1.5s ease-out both;
+}
+.fabric-object,
+.fabric-effects {
+  color: var(--fabric-node);
+}
+.fabric-object:nth-child(3n),
+.fabric-pulse[data-variant="2"] {
+  color: var(--fabric-accent);
+}
+.fabric-label {
+  font: 7px var(--mono);
+  fill: currentColor;
+  stroke: none;
+}
+.fabric-pulse:not([data-active]) {
+  display: none;
+}
+@keyframes fabric-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (max-width: 767px) {
+  .site-background [data-wide] {
+    display: none;
+  }
 }
 
 .button.primary {

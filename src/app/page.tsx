@@ -16,7 +16,6 @@ import {
   Zap,
 } from "lucide-react";
 import { DatabaseArt } from "@/components/database-art";
-import { HeroBackground } from "@/components/hero-background";
 import {
   InstallCommand,
   QueryExplorer,
@@ -75,7 +74,6 @@ export default function Home() {
   return (
     <main id="main">
       <section className="hero-stage" aria-label="Introducing CobaltDB">
-        <HeroBackground />
         <div className="hero container">
           <div className="hero-copy">
             <a

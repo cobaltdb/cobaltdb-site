@@ -29,6 +29,122 @@ async function pulseCount(page: Page) {
   return page.locator(".fabric-pulse[data-active]").count();
 }
 
+test("nearby shapes orbit a stationary pointer smoothly and settle after it leaves", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await start(page);
+  const before = await poses(page);
+  const index = before.findIndex(
+    (p) => p.x > 350 && p.x < 1250 && p.y > 200 && p.y < 800 && p.opacity > 0.1,
+  );
+  expect(index).toBeGreaterThanOrEqual(0);
+  const origin = { x: before[index].x - 100, y: before[index].y };
+  await page.mouse.move(origin.x, origin.y);
+  const angles: number[] = [];
+  let previous = before[index];
+  let maxStep = 0;
+  for (let i = 0; i < 12; i++) {
+    await page.clock.runFor(180);
+    const point = (await poses(page))[index];
+    angles.push(Math.atan2(point.y - origin.y, point.x - origin.x));
+    maxStep = Math.max(
+      maxStep,
+      Math.hypot(point.x - previous.x, point.y - previous.y),
+    );
+    previous = point;
+  }
+  expect(Math.max(...angles) - Math.min(...angles)).toBeGreaterThan(0.28);
+  expect(maxStep).toBeLessThan(45);
+  await page.locator("html").dispatchEvent("pointerleave");
+  await page.clock.runFor(1800);
+  const settled = (await poses(page))[index];
+  expect(
+    Math.hypot(settled.x - before[index].x, settled.y - before[index].y),
+  ).toBeLessThan(10);
+});
+
+test("clicks trigger a bounded delayed chain beyond the primary wave and then settle", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1920, height: 1200 });
+  await start(page);
+  const before = await poses(page);
+  const index = before.reduce(
+    (best, p, i) =>
+      Math.hypot(p.x - 960, p.y - 600) <
+      Math.hypot(before[best].x - 960, before[best].y - 600)
+        ? i
+        : best,
+    0,
+  );
+  const origin = before[index];
+  const count = await page
+    .locator(".site-background *,.site-interaction *")
+    .count();
+  const event = {
+    clientX: origin.x,
+    clientY: origin.y,
+    pointerType: "touch",
+    pointerId: 7,
+    isPrimary: true,
+    button: 0,
+  };
+  await page.locator("#main").dispatchEvent("pointerdown", event);
+  await page.locator("#main").dispatchEvent("pointerup", event);
+  const arrivals = new Map<number, number>();
+  for (let time = 100; time <= 2200; time += 100) {
+    await page.clock.runFor(100);
+    const active = await page
+      .locator(".fabric-response")
+      .evaluateAll((elements) =>
+        elements.flatMap((element, i) => {
+          const matrix = (element as SVGGraphicsElement).getCTM();
+          return matrix &&
+            Math.hypot(matrix.a, matrix.b) > 1.015 &&
+            Number(element.getAttribute("opacity")) > 0.01
+            ? [i]
+            : [];
+        }),
+      );
+    active.forEach((i) => {
+      if (!arrivals.has(i)) arrivals.set(i, time);
+    });
+  }
+  expect(arrivals.size).toBeGreaterThanOrEqual(3);
+  expect(arrivals.size).toBeLessThanOrEqual(8);
+  expect(
+    [...arrivals].some(
+      ([i, at]) =>
+        at > 100 &&
+        Math.hypot(before[i].x - origin.x, before[i].y - origin.y) > 375,
+    ),
+  ).toBe(true);
+  expect(
+    await page.locator(".site-background *,.site-interaction *").count(),
+  ).toBe(count);
+  await page.clock.fastForward(4000);
+  await page.clock.runFor(1600);
+  expect(await pulseCount(page)).toBe(0);
+  expect(
+    await page
+      .locator(".fabric-response")
+      .evaluateAll((elements) =>
+        elements.every(
+          (element) => Number(element.getAttribute("opacity")) === 0,
+        ),
+      ),
+  ).toBe(true);
+  const settled = await poses(page);
+  expect(
+    Math.max(
+      ...settled.map((p, i) =>
+        Math.hypot(p.x - before[i].x, p.y - before[i].y),
+      ),
+    ),
+  ).toBeLessThan(10);
+});
+
 test("interaction effects paint above opaque content without section clipping or text masks", async ({
   page,
 }) => {

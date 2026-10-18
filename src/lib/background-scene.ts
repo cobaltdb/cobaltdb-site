@@ -10,6 +10,18 @@ export const BACKGROUND_SCENE = {
     follow: 18,
     lightRadius: 180,
     lifetime: 3,
+    orbitSpeed: 1.35,
+    orbitBlend: 0.75,
+  },
+  spring: { stiffness: 48, damping: 13, maxOffset: 105 },
+  chain: {
+    max: 8,
+    compactMax: 5,
+    hops: 2,
+    neighbors: 2,
+    speed: 700,
+    decay: 0.56,
+    lifetime: 1.1,
   },
   trail: { max: 14, lifetime: 0.7 },
   pulse: {
@@ -77,6 +89,13 @@ type Pulse = Point & {
   rings: SVGGElement[];
   arcs: SVGUseElement[][];
   sparks: SVGUseElement[];
+  arrivals: Float64Array;
+  weights: Float32Array;
+  hops: Uint8Array;
+  states: Uint8Array;
+  fromX: Float32Array;
+  fromY: Float32Array;
+  budget: number;
 };
 const clamp = (value: number, min = 0, max = 1) =>
   Math.max(min, Math.min(max, value));
@@ -104,6 +123,20 @@ export function mountBackgroundScene(
   const field = svg.querySelector<SVGGElement>(".fabric-field");
   if (!field) return;
   const objects = [...svg.querySelectorAll<SVGGElement>(".fabric-object")];
+  const nodes = objects.map((element, index) => ({
+    element,
+    seed: objectSeed(index),
+    baseX: 0,
+    baseY: 0,
+    x: 0,
+    y: 0,
+    vx: 0,
+    vy: 0,
+    orbit: 0,
+    born: -Infinity,
+    resonance: 0,
+    charge: 0,
+  }));
   const responses = [
     ...overlay.querySelectorAll<SVGGElement>(".fabric-response"),
   ];
@@ -137,6 +170,13 @@ export function mountBackgroundScene(
       (ring) => [...ring.querySelectorAll<SVGUseElement>("use")],
     ),
     sparks: [...element.querySelectorAll<SVGUseElement>(".fabric-spark")],
+    arrivals: new Float64Array(objects.length).fill(Infinity),
+    weights: new Float32Array(objects.length),
+    hops: new Uint8Array(objects.length),
+    states: new Uint8Array(objects.length),
+    fromX: new Float32Array(objects.length),
+    fromY: new Float32Array(objects.length),
+    budget: 0,
   }));
   let width = 1600;
   let height = 1000;
@@ -164,10 +204,25 @@ export function mountBackgroundScene(
     targetY: 0,
     strength: 0,
     active: false,
+    movedAt: -Infinity,
   };
   let hero: HTMLElement | null = null;
   let heroArt: SVGSVGElement | null = null;
   let heroVisible = false;
+
+  function resetDynamics() {
+    for (const node of nodes) {
+      node.x =
+        node.y =
+        node.vx =
+        node.vy =
+        node.orbit =
+        node.charge =
+        node.resonance =
+          0;
+      node.born = -Infinity;
+    }
+  }
 
   function syncHero() {
     if (!hero) return;
@@ -218,6 +273,7 @@ export function mountBackgroundScene(
         }
         pointer.active = false;
         pointer.strength = 0;
+        resetDynamics();
         trails.forEach((trail) => {
           trail.born = -Infinity;
         });
@@ -356,6 +412,92 @@ export function mountBackgroundScene(
       clamp((fraction - 0.42) / 0.12) * 32 * slope;
     return displaced ? displace(x, y, 0.55) : { x, y };
   }
+  function updateChain(now: number, count: number) {
+    // A pulse owns fixed typed arrays: at most eight arrivals and two hops.
+    // No recursive waves, DOM nodes or timers are created by a reaction.
+    const reach = clamp(
+      Math.sqrt((width * height) / count) * 1.5,
+      180,
+      compact ? 220 : 480,
+    );
+    const limit = compact
+      ? BACKGROUND_SCENE.chain.compactMax
+      : BACKGROUND_SCENE.chain.max;
+    for (const node of nodes) {
+      const age = (now - node.born) / 1000;
+      node.charge =
+        age >= BACKGROUND_SCENE.chain.lifetime
+          ? 0
+          : node.resonance *
+            smooth(age / 0.08) *
+            (1 - age / BACKGROUND_SCENE.chain.lifetime) ** 2;
+    }
+    if (reduced) return;
+    for (const pulse of pulses) {
+      if (pulse.age >= BACKGROUND_SCENE.pulse.lifetime) continue;
+      const progress = pulse.age / BACKGROUND_SCENE.pulse.lifetime;
+      for (let i = 0; i < count; i++) {
+        const node = nodes[i];
+        if (
+          !pulse.states[i] &&
+          pulse.budget < limit &&
+          edge(node.baseX, node.baseY) > 0.2 &&
+          Math.hypot(node.baseX - pulse.x, (node.baseY - pulse.y) / 0.7) <=
+            radius(progress) + 18
+        ) {
+          pulse.states[i] = 1;
+          pulse.arrivals[i] = now;
+          pulse.weights[i] = pulse.strength * 0.85 * (1 - progress * 0.6);
+          pulse.fromX[i] = pulse.x;
+          pulse.fromY[i] = pulse.y;
+          pulse.budget++;
+        }
+        if (pulse.states[i] !== 1 || pulse.arrivals[i] > now) continue;
+        pulse.states[i] = 2;
+        // Wall-clock expiry also applies to delayed arrivals after throttling.
+        const lateness = (now - pulse.arrivals[i]) / 1000;
+        if (lateness >= BACKGROUND_SCENE.chain.lifetime) continue;
+        const weight = pulse.weights[i];
+        node.resonance = Math.min(1, Math.max(node.charge, weight));
+        node.born = pulse.arrivals[i];
+        const dx = node.baseX - pulse.fromX[i],
+          dy = node.baseY - pulse.fromY[i];
+        const distance = Math.max(1, Math.hypot(dx, dy));
+        node.vx += (dx / distance) * weight * 95 * node.seed.depth;
+        node.vy += (dy / distance) * weight * 95 * node.seed.depth;
+        if (pulse.hops[i] >= BACKGROUND_SCENE.chain.hops) continue;
+        for (
+          let branch = 0;
+          branch < BACKGROUND_SCENE.chain.neighbors && pulse.budget < limit;
+          branch++
+        ) {
+          let nearest = -1,
+            distance = reach;
+          for (let j = 0; j < count; j++) {
+            if (pulse.states[j] || edge(nodes[j].baseX, nodes[j].baseY) < 0.2)
+              continue;
+            const gap = Math.hypot(
+              nodes[j].baseX - node.baseX,
+              nodes[j].baseY - node.baseY,
+            );
+            if (gap < distance) {
+              nearest = j;
+              distance = gap;
+            }
+          }
+          if (nearest < 0) break;
+          pulse.states[nearest] = 1;
+          pulse.arrivals[nearest] =
+            now + 90 + (distance / BACKGROUND_SCENE.chain.speed) * 1000;
+          pulse.weights[nearest] = weight * BACKGROUND_SCENE.chain.decay;
+          pulse.hops[nearest] = pulse.hops[i] + 1;
+          pulse.fromX[nearest] = node.baseX;
+          pulse.fromY[nearest] = node.baseY;
+          pulse.budget++;
+        }
+      }
+    }
+  }
   function render(dt: number, updateGradients: boolean) {
     // Transients expire in real time; only ambient geometry uses capped deltas.
     // Returning from a hidden/throttled tab must not resurrect an old click.
@@ -403,9 +545,9 @@ export function mountBackgroundScene(
     const objectCount = compact
       ? BACKGROUND_SCENE.objects.compact
       : BACKGROUND_SCENE.objects.full;
-    objects.forEach((element, index) => {
+    nodes.forEach((node, index) => {
       if (index >= objectCount) return;
-      const seed = objectSeed(index);
+      const seed = node.seed;
       const y =
         wrap(
           seed.y * (height + 120) +
@@ -413,22 +555,83 @@ export function mountBackgroundScene(
             scroll * seed.depth * BACKGROUND_SCENE.motion.parallax,
           height + 120,
         ) - 60;
-      const point = displace(
+      node.baseX =
         seed.x * width +
-          Math.sin(time * BACKGROUND_SCENE.motion.speed + seed.phase) *
-            BACKGROUND_SCENE.motion.drift *
-            seed.depth,
+        Math.sin(time * BACKGROUND_SCENE.motion.speed + seed.phase) *
+          BACKGROUND_SCENE.motion.drift *
+          seed.depth;
+      node.baseY =
         y +
-          Math.cos(time * BACKGROUND_SCENE.motion.speed * 0.8 + seed.phase) *
-            BACKGROUND_SCENE.motion.drift,
-        seed.depth,
+        Math.cos(time * BACKGROUND_SCENE.motion.speed * 0.8 + seed.phase) *
+          BACKGROUND_SCENE.motion.drift;
+    });
+    updateChain(now, objectCount);
+    nodes.forEach((node, index) => {
+      if (index >= objectCount) return;
+      const { element, seed } = node;
+      const target = displace(node.baseX, node.baseY, seed.depth);
+      const dx = node.baseX - pointer.x,
+        dy = node.baseY - pointer.y;
+      const proximity =
+        smooth(1 - Math.hypot(dx, dy) / BACKGROUND_SCENE.pointer.radius) *
+        pointer.strength;
+      node.orbit = wrap(
+        node.orbit +
+          dt *
+            BACKGROUND_SCENE.pointer.orbitSpeed *
+            (0.8 + seed.depth * 0.4) *
+            proximity,
+        Math.PI * 2,
       );
+      const orbit = proximity * BACKGROUND_SCENE.pointer.orbitBlend;
+      const tx =
+        target.x -
+        node.baseX +
+        ((Math.cos(node.orbit) - 1) * dx - Math.sin(node.orbit) * dy) * orbit;
+      const ty =
+        target.y -
+        node.baseY +
+        (Math.sin(node.orbit) * dx + (Math.cos(node.orbit) - 1) * dy) * orbit;
+      // Substeps keep the damped spring stable at the mobile/idle frame budget.
+      const steps = Math.max(1, Math.ceil(dt * 60)),
+        step = dt / steps;
+      for (let i = 0; i < steps; i++) {
+        node.vx +=
+          ((tx - node.x) * BACKGROUND_SCENE.spring.stiffness -
+            node.vx * BACKGROUND_SCENE.spring.damping) *
+          step;
+        node.vy +=
+          ((ty - node.y) * BACKGROUND_SCENE.spring.stiffness -
+            node.vy * BACKGROUND_SCENE.spring.damping) *
+          step;
+        node.x += node.vx * step;
+        node.y += node.vy * step;
+      }
+      const offset = Math.hypot(node.x, node.y);
+      if (offset > BACKGROUND_SCENE.spring.maxOffset) {
+        const scale = BACKGROUND_SCENE.spring.maxOffset / offset;
+        node.x *= scale;
+        node.y *= scale;
+        node.vx *= 0.7;
+        node.vy *= 0.7;
+      }
+      const point = { x: node.baseX + node.x, y: node.baseY + node.y };
       const alpha = clarity(point.x, point.y) * (0.42 + seed.depth * 0.42);
       attr(element, "opacity", alpha.toFixed(3));
-      const reactive = reduced ? 0 : influence(point.x, point.y) * 0.65;
+      const reactive = reduced
+        ? 0
+        : Math.max(influence(point.x, point.y), node.charge * 0.8) * 0.65;
       attr(responses[index], "opacity", reactive.toFixed(3));
       if (alpha < 0.005) return; // No transform work for objects outside the viewport.
-      const transform = `translate(${point.x.toFixed(2)} ${point.y.toFixed(2)}) rotate(${(Math.sin(time * 0.07 + seed.phase) * 7).toFixed(2)})`;
+      const rotation =
+        Math.sin(time * 0.07 + seed.phase) * 7 +
+        Math.sin(node.orbit) * proximity * 18 +
+        node.vx * 0.05 +
+        (node.charge
+          ? Math.sin(((now - node.born) / 1000) * 12) * node.charge * 12
+          : 0);
+      const breathe = Math.sin(node.orbit * 1.5) * proximity * 0.025;
+      const transform = `translate(${point.x.toFixed(2)} ${point.y.toFixed(2)}) rotate(${rotation.toFixed(2)}) scale(${(1 + node.charge * 0.1 + breathe).toFixed(3)} ${(1 - node.charge * 0.035 - breathe * 0.4).toFixed(3)})`;
       attr(element, "transform", transform);
       if (reactive > 0.005) attr(responses[index], "transform", transform);
     });
@@ -587,6 +790,7 @@ export function mountBackgroundScene(
     attr(overlay, "data-motion", svg.getAttribute("data-motion") ?? "paused");
     pointer.active = false;
     pointer.strength = 0;
+    resetDynamics();
     attr(light, "opacity", 0);
     press = undefined;
     if (reduced) {
@@ -634,12 +838,18 @@ export function mountBackgroundScene(
       pointer.x = event.clientX;
       pointer.y = event.clientY;
     }
+    const now = performance.now();
     if (
       pointer.active &&
+      now - pointer.movedAt < 150 &&
       Math.hypot(
         event.clientX - pointer.targetX,
         event.clientY - pointer.targetY,
-      ) > 2
+      ) > 2 &&
+      Math.hypot(
+        event.clientX - pointer.targetX,
+        event.clientY - pointer.targetY,
+      ) < BACKGROUND_SCENE.pointer.radius
     ) {
       const trail = trails[trailIndex++ % trails.length];
       trail.born = performance.now();
@@ -652,7 +862,8 @@ export function mountBackgroundScene(
     pointer.targetX = event.clientX;
     pointer.targetY = event.clientY;
     pointer.active = true;
-    lastInput = performance.now();
+    pointer.movedAt = now;
+    lastInput = now;
   }
   function down(event: PointerEvent) {
     if (
@@ -714,6 +925,10 @@ export function mountBackgroundScene(
     pulse.born = now;
     pulse.strength = 1;
     pulse.variant = (serial++ + Math.floor((pulse.x / width) * 3)) % 3;
+    pulse.budget = 0;
+    pulse.arrivals.fill(Infinity);
+    pulse.states.fill(0);
+    pulse.hops.fill(0);
     attr(pulse.element, "data-active", "true");
     attr(pulse.element, "data-variant", pulse.variant);
     attr(pulse.element, "transform", `translate(${pulse.x} ${pulse.y})`);

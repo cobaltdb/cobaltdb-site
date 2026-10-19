@@ -325,9 +325,10 @@ test("wide compositions use columns while keeping prose readable", async ({
         card: bounds(".feature-card"),
         editor: bounds(".query-editor"),
         results: bounds(".query-results"),
-        projects: getComputedStyle(
-          document.querySelector(".studio-projects") as Element,
-        ).gridTemplateColumns.split(" ").length,
+        studio: bounds(".studio"),
+        studioCopy: bounds(".studio > div"),
+        studioLogo: bounds(".oxog-mark"),
+        studioLink: bounds(".studio-link"),
       };
     });
     expect(layout.hero.width).toBeLessThanOrEqual(1750);
@@ -336,7 +337,10 @@ test("wide compositions use columns while keeping prose readable", async ({
     expect(layout.copy.width).toBeLessThanOrEqual(620);
     expect(layout.copy.font).toBeGreaterThanOrEqual(15);
     expect(Math.abs(layout.feature.y - layout.card.y)).toBeLessThanOrEqual(1);
-    expect(layout.projects).toBe(2);
+    expect(layout.studio.width).toBeLessThanOrEqual(1750);
+    expect(layout.studioLogo.width).toBe(105);
+    expect(layout.studioLogo.right).toBeLessThan(layout.studioCopy.x);
+    expect(layout.studioCopy.right).toBeLessThanOrEqual(layout.studioLink.x);
     if (width >= 1920) {
       expect(Math.abs(layout.editor.y - layout.results.y)).toBeLessThanOrEqual(
         1,
@@ -412,27 +416,38 @@ test("narrow phones have comfortable controls, readable copy and working navigat
   }
 });
 
-test("studio logo draws on first view and remains complete on return", async ({
+test("studio logo repeats the reference six-second drawing cycle only while visible", async ({
   page,
 }) => {
   await page.goto("/");
-  const logo = page.locator(".studio-symbol");
+  const logo = page.locator(".oxog-mark");
   expect(
     await logo.evaluate((el) => el.getAnimations({ subtree: true }).length),
   ).toBe(0);
   await logo.scrollIntoViewIfNeeded();
-  await expect
-    .poll(() =>
-      logo.evaluate((el) =>
-        el
-          .getAnimations({ subtree: true })
-          .some((animation) => animation.playState === "running"),
-      ),
-    )
-    .toBe(true);
+  await expect(logo).toHaveAttribute("data-motion", "drawing");
+  const timings = await logo.evaluate((el) =>
+    el.getAnimations({ subtree: true }).map((animation) => {
+      const timing = animation.effect?.getTiming();
+      return {
+        duration: timing?.duration,
+        delay: timing?.delay,
+        iterations: timing?.iterations,
+      };
+    }),
+  );
+  expect(timings).toEqual(
+    [0, 150, 300, 450].map((delay) => ({
+      duration: 6000,
+      delay,
+      iterations: Infinity,
+    })),
+  );
   await logo.evaluate((el) => {
-    for (const animation of el.getAnimations({ subtree: true }))
-      animation.finish();
+    for (const animation of el.getAnimations({ subtree: true })) {
+      animation.pause();
+      animation.currentTime = 2500;
+    }
   });
   const offsets = () =>
     logo
@@ -441,18 +456,33 @@ test("studio logo draws on first view and remains complete on return", async ({
         paths.map((path) => getComputedStyle(path).strokeDashoffset),
       );
   expect(await offsets()).toEqual(["0px", "0px", "0px", "0px"]);
+  await logo.evaluate((el) => {
+    for (const animation of el.getAnimations({ subtree: true }))
+      animation.currentTime = 6500;
+  });
+  expect((await offsets()).every((offset) => parseFloat(offset) > 0)).toBe(
+    true,
+  );
   await page
     .getByRole("heading", { name: /Small footprint/ })
     .scrollIntoViewIfNeeded();
+  await expect(logo).toHaveAttribute("data-motion", "static");
+  expect(
+    await logo.evaluate((el) => el.getAnimations({ subtree: true }).length),
+  ).toBe(0);
+  expect(await offsets()).toEqual(["0px", "0px", "0px", "0px"]);
   await logo.scrollIntoViewIfNeeded();
+  await expect(logo).toHaveAttribute("data-motion", "drawing");
+  await page
+    .getByRole("button", { name: "Disable mouse effects", exact: true })
+    .click();
   expect(
     await logo.evaluate((el) =>
       el
         .getAnimations({ subtree: true })
-        .every((animation) => animation.playState === "finished"),
+        .every((animation) => animation.playState === "running"),
     ),
   ).toBe(true);
-  expect(await offsets()).toEqual(["0px", "0px", "0px", "0px"]);
 });
 
 test("reduced motion disables decorative animation", async ({ page }) => {
@@ -468,7 +498,7 @@ test("reduced motion disables decorative animation", async ({ page }) => {
       .locator(".art-packets")
       .evaluate((el) => getComputedStyle(el).display),
   ).toBe("none");
-  const logo = page.locator(".studio-symbol");
+  const logo = page.locator(".oxog-mark");
   await logo.scrollIntoViewIfNeeded();
   expect(
     await logo.evaluate((el) => el.getAnimations({ subtree: true }).length),

@@ -1398,23 +1398,6 @@ p {
 .footer-column a:hover {
   color: var(--blue);
 }
-.footer-bottom {
-  display: flex;
-  align-items: center;
-  gap: 1.625rem;
-  min-height: 3.875rem;
-  border-top: 1px solid var(--line);
-  font-size: 0.5rem;
-  color: var(--muted);
-}
-.footer-bottom > span:first-child {
-  margin-right: auto;
-}
-.footer-bottom a {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
 .search-dialog {
   width: min(38.125rem, calc(100% - 2rem));
   max-height: 80dvh;
@@ -2674,20 +2657,6 @@ p {
   .footer-column h3 {
     font-size: 0.625rem;
   }
-  .footer-bottom {
-    flex-wrap: wrap;
-    gap: 0.75rem 1.1875rem;
-    padding-top: 1.25rem;
-    padding-bottom: 1.25rem;
-    font-size: 0.5rem;
-  }
-  .footer-bottom > span:first-child {
-    flex-basis: 100%;
-    margin-bottom: 0.25rem;
-  }
-  .footer-bottom > a:last-child {
-    margin-left: auto;
-  }
   .docs-layout {
     display: block;
     padding-top: 1.5625rem;
@@ -2880,7 +2849,7 @@ p {
 .deployment-grid > *,
 .faq-section > *,
 .footer-main > *,
-.studio-card > *,
+.studio > *,
 .brand-grid > * {
   min-width: 0;
 }
@@ -2928,9 +2897,6 @@ p {
   .compatibility-note,
   .code-footnote,
   .query-disclaimer,
-  .footer-bottom {
-    font-size: 0.6875rem;
-  }
   .code-block pre,
   .query-editor pre,
   .query-results table {

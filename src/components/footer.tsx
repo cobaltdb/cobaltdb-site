@@ -1,8 +1,7 @@
-import { Github } from "@/components/github-icon";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { Logo } from "./logo";
-import { REPO } from "@/lib/site";
+import { REPO, VERSION } from "@/lib/site";
 import { Studio } from "./studio";
 
 export function Footer() {
@@ -51,13 +50,10 @@ export function Footer() {
       </div>
       <Studio />
       <div className="container footer-bottom">
-        <span>© {new Date().getFullYear()} CobaltDB contributors</span>
-        <a href={`${REPO}/blob/main/LICENSE`}>MIT licensed</a>
-        <a href={REPO} aria-label="CobaltDB on GitHub">
-          <Github size={17} />
-        </a>
-        <a href="https://github.com/cobaltdb/cobaltdb-site">
-          Website source
+        <span>© {new Date().getUTCFullYear()} CobaltDB contributors.</span>
+        <span>MIT · Made to be yours.</span>
+        <a href={`${REPO}/releases`}>
+          v{VERSION}
           <ArrowUpRight size={12} />
         </a>
       </div>

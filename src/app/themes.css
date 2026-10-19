@@ -547,222 +547,132 @@
   }
 }
 
-.studio-section {
-  padding-bottom: 2.75rem;
-}
-.studio-card {
-  display: grid;
-  grid-template-columns: 8rem minmax(0, 1fr) 13.5rem;
+/* OXOG footer: the MammothEngine studio composition and drawing cadence. */
+.studio {
+  --studio-ink: light-dark(#191c32, #f6f0e4);
+  --studio-muted: light-dark(#65605a, #b5b2b9);
+  --studio-line: light-dark(#ded4c2, #373b50);
+  --studio-accent: light-dark(#333957, #e7d2a4);
+  display: flex;
   align-items: center;
-  gap: var(--layout-gap);
-  padding: var(--panel-space);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 1rem;
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-}
-.studio-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
+  gap: clamp(30px, 4vw, 70px);
+  padding: 35px 45px;
+  border: 1px solid var(--studio-line);
+  border-radius: 7px;
+  color: var(--studio-ink);
   background: radial-gradient(
-    ellipse at 100% 0,
-    color-mix(in srgb, var(--oxog-pink) 8%, transparent),
-    transparent 55%
+    ellipse at 15% 30%,
+    color-mix(in srgb, #ed0878 4%, transparent),
+    transparent 65%
   );
-  z-index: -1;
-  pointer-events: none;
 }
-.studio-logo-link {
+.oxog-mark {
   display: block;
-  border-radius: 0.5rem;
-}
-.studio-symbol {
-  width: 100%;
+  width: 105px;
   height: auto;
-  display: block;
 }
-.studio-symbol[data-motion="waiting"] path {
-  stroke-dasharray: 400;
-  stroke-dashoffset: 400;
+.studio .eyebrow {
+  font: 8px/1.6 var(--mono);
+  letter-spacing: 0.12em;
+  color: var(--studio-accent);
+  margin-bottom: 9px;
 }
-.studio-symbol[data-motion="drawing"] path {
-  stroke-dasharray: 400;
-  animation: studio-signature-draw 1.6s cubic-bezier(0.6, 0.1, 0.2, 1) both;
+.studio h2 {
+  font-size: 35px;
 }
-.studio-symbol[data-motion="drawing"] path:nth-child(2) {
-  animation-delay: 0.25s;
+.studio h2 > span {
+  color: var(--studio-muted);
 }
-.studio-symbol[data-motion="drawing"] path:nth-child(3) {
-  animation-delay: 0.5s;
+.studio p {
+  color: var(--studio-muted);
+  font-size: 11px;
+  line-height: 1.7;
+  margin-top: 9px;
 }
-.studio-symbol[data-motion="drawing"] path:nth-child(4) {
-  animation-delay: 0.9s;
+.studio-link {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-left: auto;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--studio-accent);
 }
-@keyframes studio-signature-draw {
-  from {
+.studio:hover {
+  border-color: #ed0878;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .oxog-mark[data-motion="drawing"] path {
+    stroke-dasharray: 400;
+    animation: oxog-draw 6s ease-in-out var(--draw-delay, 0s) infinite;
+  }
+  .oxog-mark path:nth-child(2) {
+    --draw-delay: 0.15s;
+  }
+  .oxog-mark path:nth-child(3) {
+    --draw-delay: 0.3s;
+  }
+  .oxog-mark path:nth-child(4) {
+    --draw-delay: 0.45s;
+  }
+}
+@keyframes oxog-draw {
+  0% {
     stroke-dashoffset: 400;
   }
-  to {
+  33%,
+  100% {
     stroke-dashoffset: 0;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .studio-symbol path {
-    animation: none !important;
-    stroke-dashoffset: 0 !important;
-  }
-}
-.studio-copy .eyebrow {
-  font-size: 0.5rem;
-  margin-bottom: 1rem;
-}
-.studio-copy > p {
-  font-size: 0.8125rem;
-  line-height: 1.9;
-  max-width: 29rem;
-}
-.studio-copy h2 {
-  font-size: 2.5rem;
-  letter-spacing: -0.065em;
-  margin: 0.4rem 0 1rem;
-  font-weight: 700;
-}
-.studio-copy h2 a {
-  display: inline-flex;
-  align-items: baseline;
-}
-.studio-copy h2 span {
-  font-weight: 400;
-  color: var(--muted);
-}
-.studio-copy h2 .studio-dot {
-  color: var(--oxog-pink);
-  font-weight: 700;
-}
-.studio-copy h2 svg {
-  margin-left: 0.6rem;
-  align-self: center;
-  width: 1.25rem;
-  height: 1.25rem;
-  color: var(--muted);
-}
-.studio-explore {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--blue);
-  font-size: 0.625rem;
-  font-weight: 600;
-  margin-top: 1rem;
-}
-.studio-projects {
-  display: grid;
-  gap: 0.5rem;
-}
-.studio-projects a {
+.site-footer .footer-bottom {
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
+  gap: 25px;
   justify-content: space-between;
-  gap: 0.75rem;
-  min-height: 3.25rem;
-  border: 1px solid var(--line);
-  padding: 0.65rem 0.8rem;
-  border-radius: 0.5rem;
-  transition:
-    border-color 0.2s,
-    background 0.2s;
-}
-.studio-projects a:hover {
-  border-color: var(--oxog-pink);
-  background: var(--surface-hover);
-}
-.studio-projects strong {
-  display: block;
-  font-size: 0.6875rem;
-  font-weight: 650;
-  line-height: 1.5;
-}
-.studio-projects small {
-  display: block;
+  border: 0;
   color: var(--muted);
-  font-size: 0.5625rem;
-  line-height: 1.6;
+  font: 9px/1.8 var(--mono);
+  padding-block: 25px;
+  min-height: 0;
 }
-.studio-projects svg {
-  width: 0.875rem;
-  height: 0.875rem;
-  color: var(--muted);
+.site-footer .footer-bottom > span:first-child {
+  margin: 0;
+  flex-basis: auto;
 }
-.studio-signature {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-  margin-top: 1rem;
-  font: 0.5rem/1.7 var(--mono);
-  color: var(--muted);
+.site-footer .footer-bottom > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
 }
-
-@media (min-width: 1360px) {
-  .studio-card {
-    grid-template-columns: 8rem minmax(0, 1.15fr) minmax(20rem, 1fr);
-  }
-  .studio-copy h2 {
-    font-size: 3rem;
-  }
-  .studio-copy > p {
-    font-size: 0.9375rem;
-    max-width: 33rem;
-  }
-  .studio-copy .eyebrow,
-  .studio-signature {
-    font-size: 0.625rem;
-  }
-  .studio-explore {
-    font-size: 0.8125rem;
-  }
-  .studio-projects {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
-  }
-  .studio-projects a {
-    min-height: 4.5rem;
-    padding: 1rem;
-  }
-  .studio-projects strong {
-    font-size: 0.8125rem;
-  }
-  .studio-projects small {
-    font-size: 0.6875rem;
-  }
-}
-
 @media (max-width: 1100px) {
-  .studio-card {
-    grid-template-columns: 6rem minmax(0, 1fr) 12rem;
-    gap: 1.75rem;
-    padding: 2rem;
+  .studio {
+    padding: 30px;
+    gap: 30px;
+  }
+  .studio h2 {
+    font-size: 29px;
   }
 }
 @media (max-width: 850px) {
   .header-actions {
     gap: 0.5rem;
   }
-  .studio-card {
-    grid-template-columns: 6rem minmax(0, 1fr);
+}
+@media (max-width: 800px) {
+  .studio {
+    flex-wrap: wrap;
   }
-  .studio-projects {
-    grid-column: 1/-1;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  .studio-link {
+    width: 100%;
+    margin: 0;
+    justify-content: end;
   }
-  .studio-projects a {
-    padding: 0.7rem;
-  }
-  .studio-projects a svg {
-    display: none;
+  .site-footer .footer-bottom {
+    flex-wrap: wrap;
+    gap: 12px;
   }
 }
 @media (max-width: 680px) {
@@ -779,43 +689,35 @@
     min-width: 2.75rem;
     min-height: 2.75rem;
   }
-  .studio-card {
-    grid-template-columns: 1fr;
-    padding: 1.75rem;
-    gap: 1.5rem;
-    border-radius: 0.75rem;
+}
+@media (max-width: 520px) {
+  .studio {
+    padding: 25px;
+    gap: 22px;
   }
-  .studio-logo-link {
-    width: 6rem;
+  .studio .oxog-mark {
+    width: 65px;
   }
-  .studio-copy h2 {
-    font-size: 2.75rem;
+  .studio > div {
+    flex: 1;
   }
-  .studio-copy > p {
-    font-size: 0.8125rem;
+  .studio .eyebrow {
+    font-size: 6px;
   }
-  .studio-copy .eyebrow {
-    font-size: 0.5rem;
+  .studio h2 {
+    font-size: 25px;
   }
-  .studio-explore {
-    font-size: 0.6875rem;
-    min-height: 2.75rem;
+  .studio h2 > span {
+    display: block;
   }
-  .studio-projects {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.5rem;
+  .studio p {
+    font-size: 9px;
   }
-  .studio-projects a {
-    padding: 0.75rem;
+  .studio-link {
+    font-size: 10px;
   }
-  .studio-projects strong {
-    font-size: 0.6875rem;
-  }
-  .studio-projects small {
-    font-size: 0.5625rem;
-  }
-  .studio-signature {
-    font-size: 0.5rem;
+  .footer-bottom > span:nth-child(2) {
+    display: none;
   }
 }
 @media (max-width: 365px) {
@@ -826,8 +728,5 @@
   .header-inner .logo svg {
     width: 2rem;
     height: 2rem;
-  }
-  .studio-card {
-    padding: 1.25rem;
   }
 }

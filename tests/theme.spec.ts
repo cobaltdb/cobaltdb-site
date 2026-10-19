@@ -200,9 +200,9 @@ test("OS dark styling is readable before JavaScript runs", async ({
     await page.goto(baseURL ?? "http://127.0.0.1:3000");
     expect(await brightness(page)).toBeLessThan(60);
     await expect(
-      page.getByRole("heading", { name: /oxog\s*net\s*\./ }),
+      page.getByRole("heading", { name: /Small studio\.\s*Big ideas\./ }),
     ).toBeVisible();
-    const logo = page.locator(".studio-symbol");
+    const logo = page.locator(".oxog-mark");
     await expect(logo).toBeVisible();
     expect(
       await logo
@@ -223,15 +223,26 @@ test("OXOGNET studio card and theme selector fit small phones and 4K", async ({
     await page.setViewportSize({ width, height: width === 3840 ? 2160 : 1000 });
     await page.goto("/");
     await expect(
-      page.getByRole("heading", { name: /oxog\s*net\s*\./ }),
+      page.getByRole("heading", { name: /Small studio\.\s*Big ideas\./ }),
     ).toBeVisible();
-    const projects = page.getByRole("navigation", {
-      name: "More from OXOGNET",
-    });
-    await expect(projects.getByRole("link")).toHaveCount(4);
+    const studio = page.locator("a.studio");
+    await expect(studio).toHaveAttribute("href", "https://oxog.net");
     await expect(
-      projects.getByRole("link", { name: /NineDeploy/ }),
-    ).toHaveAttribute("href", "https://oxog.net/projects/ninedeploy");
+      studio.getByText("PART OF A BIGGER PICTURE", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      studio.getByText("Explore the tools and infrastructure from Oxog.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      studio.getByText("Meet oxog.net", { exact: true }),
+    ).toBeVisible();
+    await expect(studio.locator(".oxog-mark path")).toHaveCount(4);
+    await expect(
+      page.locator(".studio-projects,.studio-signature,.studio-card"),
+    ).toHaveCount(0);
+    await expect(page.locator(".footer-bottom > a")).toHaveCount(1);
     const picker = await themeTrigger(page).boundingBox();
     expect(picker?.width).toBeGreaterThanOrEqual(44);
     expect(picker?.height).toBeGreaterThanOrEqual(44);

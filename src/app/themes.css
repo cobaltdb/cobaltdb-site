@@ -14,6 +14,8 @@
   --line: light-dark(oklch(0.9 0.018 263), oklch(0.32 0.035 263));
   --pale: var(--surface-soft);
   --action-bg: #124fda;
+  --selection-bg: light-dark(#cbdcfd, #284b85);
+  --selection-ink: light-dark(#132448, #f4f7ff);
   --query-keyword: light-dark(#3159c7, #b3baff);
   --query-string: light-dark(#317556, #a3dbb7);
   --query-number: light-dark(#9b5c25, #efc28a);
@@ -177,9 +179,9 @@
   position: relative;
   display: grid;
   place-items: center;
-  flex: 0 0 2.75rem;
-  width: 2.75rem;
-  height: 2.75rem;
+  flex: 0 0 var(--control-size);
+  width: var(--control-size);
+  height: var(--control-size);
   padding: 0;
   border: 1px solid color-mix(in srgb, var(--blue) 25%, var(--line));
   border-radius: 0.625rem;
@@ -278,8 +280,8 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  min-width: 2.75rem;
-  min-height: 2.75rem;
+  min-width: var(--control-size);
+  min-height: var(--control-size);
   padding: 0.625rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 600;
@@ -320,6 +322,11 @@
   right: 0;
   z-index: 5;
   width: 20.5rem;
+  max-height: calc(
+    100dvh - var(--header-height) - 2rem - env(safe-area-inset-bottom)
+  );
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 1.125rem;
   color: var(--ink);
   border: 1px solid var(--line);
@@ -686,8 +693,8 @@
     display: none;
   }
   .theme-picker {
-    min-width: 2.75rem;
-    min-height: 2.75rem;
+    min-width: var(--control-size);
+    min-height: var(--control-size);
   }
 }
 @media (max-width: 520px) {

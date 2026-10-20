@@ -6,17 +6,20 @@ import { Footer } from "@/components/footer";
 import { SiteBackground } from "@/components/site-background";
 import "./themes.css";
 
-const manrope = localFont({
-  src: "../../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2",
-  variable: "--font-manrope",
-  display: "swap",
-  weight: "200 800",
-});
 const spaceGrotesk = localFont({
-  src: "../../node_modules/@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2",
-  variable: "--font-space",
+  src: "./fonts/space-grotesk.woff2",
+  variable: "--font-space-grotesk",
   display: "swap",
   weight: "300 700",
+  fallback: ["Arial", "sans-serif"],
+  adjustFontFallback: "Arial",
+});
+const jetbrains = localFont({
+  src: "./fonts/jetbrains-mono.woff2",
+  variable: "--font-jetbrains",
+  display: "swap",
+  weight: "100 800",
+  fallback: ["Consolas", "monospace"],
 });
 
 export const metadata: Metadata = {
@@ -58,7 +61,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${manrope.variable} ${spaceGrotesk.variable}`}
+      className={`${spaceGrotesk.variable} ${jetbrains.variable}`}
     >
       <head>
         <script>{`try{var t=localStorage.getItem('cobaltdb-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch{}`}</script>

@@ -22,7 +22,7 @@
   --layout-gap: clamp(1.25rem, 2.222222vw, 2rem);
   --section-space: clamp(4rem, 6.5vw, 7rem);
   --panel-space: clamp(1.5rem, 2.5vw, 2.75rem);
-  --measure-prose: 62ch;
+  --measure-prose: min(62ch, 40em);
   --measure-copy: 38rem;
 }
 * {
